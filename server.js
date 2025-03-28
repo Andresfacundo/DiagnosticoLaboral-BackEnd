@@ -3,7 +3,13 @@ const cors = require("cors");
 const app = express();
 const port = 3000;
 
-app.use(cors());
+const corsOptions = {
+    origin: "http://localhost:5173", // Reemplaza con la URL de tu frontend
+    methods: "GET, POST, PUT, DELETE",
+    allowedHeaders: "Content-Type"
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Simulación de almacenamiento en memoria
@@ -18,8 +24,12 @@ app.get("/preguntas", (req, res) => {
 // Agregar una nueva pregunta
 app.post("/preguntas", (req, res) => {
     const { texto, peso } = req.body;
-    const nuevaPregunta = { id: preguntas.length + 1, texto, peso };
+    if (!texto || !peso) return res.status(400).json({ message: "Texto y peso son obligatorios" });
+
+    const nuevaPregunta = { id: preguntas.length + 1, texto, peso: Number(peso) }; // 👈 Convertir peso a número
+
     preguntas.push(nuevaPregunta);
+    console.log(preguntas);
     res.status(201).json(nuevaPregunta);
 });
 
@@ -30,7 +40,8 @@ app.put("/preguntas/:id", (req, res) => {
     const pregunta = preguntas.find(p => p.id == id);
     
     if (!pregunta) return res.status(404).json({ message: "Pregunta no encontrada" });
-    
+    if (!texto || !peso) return res.status(400).json({ message: "Texto y peso son obligatorios" });
+
     pregunta.texto = texto;
     pregunta.peso = peso;
     res.json(pregunta);
@@ -39,45 +50,58 @@ app.put("/preguntas/:id", (req, res) => {
 // Eliminar una pregunta
 app.delete("/preguntas/:id", (req, res) => {
     const { id } = req.params;
-    preguntas = preguntas.filter(p => p.id != id);
+    const index = preguntas.findIndex(p => p.id == id);
+    
+    if (index === -1) return res.status(404).json({ message: "Pregunta no encontrada" });
+
+    preguntas.splice(index, 1);
     res.json({ message: "Pregunta eliminada" });
 });
 
 // Guardar respuestas
 app.post("/respuestas", (req, res) => {
-    const { empleadorId, respuestasUsuario } = req.body;
-    respuestas.push({ empleadorId, respuestasUsuario });
+    const { respuestasUsuario } = req.body;
+    if (!respuestasUsuario || !Array.isArray(respuestasUsuario)) {
+        return res.status(400).json({ message: "Respuestas inválidas" });
+    }
+
+    respuestas.push(respuestasUsuario);
     res.status(201).json({ message: "Respuestas guardadas" });
 });
 
-// Obtener respuestas por empleador
-app.get("/respuestas/:empleadorId", (req, res) => {
-    const { empleadorId } = req.params;
-    const respuestasEmpleador = respuestas.find(r => r.empleadorId == empleadorId);
-    res.json(respuestasEmpleador || { message: "No hay respuestas registradas" });
+// Obtener todas las respuestas
+app.get("/respuestas", (req, res) => {
+    if (respuestas.length === 0) return res.json({ message: "No hay respuestas registradas" });
+    res.json(respuestas);
 });
 
 // Calcular diagnóstico
-app.get("/diagnostico/:empleadorId", (req, res) => {
-    const { empleadorId } = req.params;
-    const respuestasEmpleador = respuestas.find(r => r.empleadorId == empleadorId);
-    
-    if (!respuestasEmpleador) return res.status(404).json({ message: "No hay respuestas para este empleador" });
-    
+app.get("/diagnostico", (req, res) => {
+    if (respuestas.length === 0) return res.status(404).json({ message: "No hay respuestas registradas" });
+
     let totalPeso = 0;
     let totalPuntaje = 0;
-    
-    respuestasEmpleador.respuestasUsuario.forEach(r => {
-        const pregunta = preguntas.find(p => p.id === r.preguntaId);
-        if (pregunta) {
-            totalPeso += pregunta.peso;
-            totalPuntaje += (r.respuesta === "Sí" ? pregunta.peso : 0);
-        }
+
+    respuestas.forEach(respuesta => {
+        respuesta.forEach(r => {
+            const pregunta = preguntas.find(p => p.id === Number(r.preguntaId));
+            if (pregunta) {
+                totalPeso += Number(pregunta.peso);
+                if (r.respuesta === "Si") {
+                    totalPuntaje += Number(pregunta.peso); 
+                }
+            }
+        });
     });
+
+    console.log("Total Peso:", totalPeso); 
+    console.log("Total Puntaje:", totalPuntaje);
+
+    const resultado = parseInt(totalPeso > 0 ? (totalPuntaje / totalPeso) * 100 : 0);
+    res.json({ resultado });
     
-    const resultado = totalPeso > 0 ? (totalPuntaje / totalPeso) * 100 : 0;
-    res.json({ empleadorId, resultado });
 });
+
 
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
