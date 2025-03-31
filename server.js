@@ -23,10 +23,20 @@ app.get("/preguntas", (req, res) => {
 
 // Agregar una nueva pregunta
 app.post("/preguntas", (req, res) => {
-    const { texto, peso } = req.body;
-    if (!texto || !peso) return res.status(400).json({ message: "Texto y peso son obligatorios" });
+    const { texto, peso, categoria } = req.body;
+    if (!texto || peso === undefined || !categoria) {
+        return res.status(400).json({ message: "Texto, peso y categoría son obligatorios" });
+    }
+    if (isNaN(peso) || peso < 0 || peso > 3) {
+        return res.status(400).json({ message: "El peso debe estar entre 0 y 3" });
+    }
 
-    const nuevaPregunta = { id: preguntas.length + 1, texto, peso: Number(peso) }; // 👈 Convertir peso a número
+    const nuevaPregunta = { 
+        id: preguntas.length + 1, 
+        texto, 
+        peso: Number(peso), 
+        categoria 
+    };
 
     preguntas.push(nuevaPregunta);
     console.log(preguntas);
@@ -36,14 +46,16 @@ app.post("/preguntas", (req, res) => {
 // Modificar una pregunta
 app.put("/preguntas/:id", (req, res) => {
     const { id } = req.params;
-    const { texto, peso } = req.body;
+    const { texto, peso, categoria } = req.body;
     const pregunta = preguntas.find(p => p.id == id);
     
     if (!pregunta) return res.status(404).json({ message: "Pregunta no encontrada" });
-    if (!texto || !peso) return res.status(400).json({ message: "Texto y peso son obligatorios" });
+    if (!texto || peso === undefined || !categoria) return res.status(400).json({ message: "Texto, peso y categoría son obligatorios" });
+    if (isNaN(peso) || peso < 0 || peso > 3) return res.status(400).json({ message: "El peso debe estar entre 0 y 3" });
 
     pregunta.texto = texto;
-    pregunta.peso = peso;
+    pregunta.peso = Number(peso);
+    pregunta.categoria = categoria;
     res.json(pregunta);
 });
 
@@ -99,9 +111,7 @@ app.get("/diagnostico", (req, res) => {
 
     const resultado = parseInt(totalPeso > 0 ? (totalPuntaje / totalPeso) * 100 : 0);
     res.json({ resultado });
-    
 });
-
 
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
