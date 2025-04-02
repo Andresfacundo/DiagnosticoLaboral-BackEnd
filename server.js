@@ -23,7 +23,7 @@ app.get("/preguntas", (req, res) => {
 
 // Agregar una nueva pregunta
 app.post("/preguntas", (req, res) => {
-    const { texto, peso, categoria } = req.body;
+    const { texto, peso, categoria, respuestas: respuestasPersonalizadas } = req.body;
     if (!texto || peso === undefined || !categoria) {
         return res.status(400).json({ message: "Texto, peso y categoría son obligatorios" });
     }
@@ -35,18 +35,23 @@ app.post("/preguntas", (req, res) => {
         id: preguntas.length + 1, 
         texto, 
         peso: Number(peso), 
-        categoria 
+        categoria
     };
 
+    // Si se proporcionan respuestas personalizadas, añadirlas a la pregunta
+    if (respuestasPersonalizadas) {
+        nuevaPregunta.respuestas = respuestasPersonalizadas;
+    }
+
     preguntas.push(nuevaPregunta);
-    console.log(preguntas);
+    console.log("Nueva pregunta añadida:", nuevaPregunta);
     res.status(201).json(nuevaPregunta);
 });
 
 // Modificar una pregunta
 app.put("/preguntas/:id", (req, res) => {
     const { id } = req.params;
-    const { texto, peso, categoria } = req.body;
+    const { texto, peso, categoria, respuestas: respuestasPersonalizadas } = req.body;
     const pregunta = preguntas.find(p => p.id == id);
     
     if (!pregunta) return res.status(404).json({ message: "Pregunta no encontrada" });
@@ -56,6 +61,13 @@ app.put("/preguntas/:id", (req, res) => {
     pregunta.texto = texto;
     pregunta.peso = Number(peso);
     pregunta.categoria = categoria;
+    
+    // Si se proporcionan respuestas personalizadas, actualizarlas
+    if (respuestasPersonalizadas) {
+        pregunta.respuestas = respuestasPersonalizadas;
+    }
+    
+    console.log("Pregunta actualizada:", pregunta);
     res.json(pregunta);
 });
 
@@ -99,8 +111,18 @@ app.get("/diagnostico", (req, res) => {
             const pregunta = preguntas.find(p => p.id === Number(r.preguntaId));
             if (pregunta) {
                 totalPeso += Number(pregunta.peso);
-                if (r.respuesta === "Si") {
-                    totalPuntaje += Number(pregunta.peso); 
+                
+                // Si la pregunta tiene respuestas personalizadas, usar ese valor
+                if (pregunta.respuestas && pregunta.respuestas[r.respuesta] !== undefined) {
+                    totalPuntaje += Number(pregunta.respuestas[r.respuesta]);
+                } else {
+                    // Si no, usar la lógica original
+                    if (r.respuesta === "Si") {
+                        totalPuntaje += Number(pregunta.peso);
+                    } else if (r.respuesta === "Si parcialmente") {
+                        totalPuntaje += Number(pregunta.peso) / 2;
+                    }
+                    // Para "No" y "N/A" se suma 0
                 }
             }
         });
