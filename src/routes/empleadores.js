@@ -23,5 +23,19 @@ router.get('/', async (req, res) =>{
         res.status(500).json({error: error.message})
     }
 });
+router.get('/:id' , async(req,res) =>{
+    try {
+        const{ id } = req.params;
+        const empleador = await Empleador.findByPk(id);
+        if (!empleador) {
+            return res.status(404).json({ error: 'Empleador no encontrado' });
+        }
+        res.json(empleador);
+
+    }catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+
+})
 
 module.exports = router;

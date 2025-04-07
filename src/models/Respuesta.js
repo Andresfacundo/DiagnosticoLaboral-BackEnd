@@ -7,6 +7,6 @@ const Respuesta = sequelize.define("Respuesta", {
   respuestas: { type: DataTypes.JSON, allowNull: false },
 });
 
-Respuesta.belongsTo(Empleador, { foreignKey: "empleadorId" });
+
 
 module.exports = Respuesta;
