@@ -1,11 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const port = 3000;
+require("dotenv").config();
+
+const port = process.env.URL || 3000;
 const {syncDatabase} = require("./src/models/index.js");
 
 const corsOptions = {
-    origin: "http://localhost:5173", // Reemplaza con la URL de tu frontend
+    origin: "https://diagnostico-laboral.vercel.app", // Reemplaza con la URL de tu frontend
     methods: "GET, POST, PUT, DELETE",
     allowedHeaders: "Content-Type"
 };
