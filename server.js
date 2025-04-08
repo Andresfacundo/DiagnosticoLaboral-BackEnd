@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 
-const port = process.env.DB_PORT || 3000;
+const port = process.env.DB_PORT;
 
 const {syncDatabase} = require("./src/models/index.js");
 
