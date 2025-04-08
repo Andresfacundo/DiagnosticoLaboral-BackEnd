@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 
-const port = process.env.URL || 3000;
+const port = process.env.URL;
 const {syncDatabase} = require("./src/models/index.js");
 
 const corsOptions = {
@@ -481,5 +481,5 @@ syncDatabase(); // Sincroniza la base de datos al iniciar el servidor
 // });
 
 app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+    console.log(`Servidor corriendo en:${port}`);
 });
