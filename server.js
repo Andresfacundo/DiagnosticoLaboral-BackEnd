@@ -8,7 +8,8 @@ const port = process.env.DB_PORT;
 const {syncDatabase} = require("./src/models/index.js");
 
 const corsOptions = {
-    origin: "https://diagnostico-laboral.vercel.app", // Reemplaza con la URL de tu frontend
+    origin: `${process.env.URL}`,
+
     methods: "GET, POST, PUT, DELETE",
     allowedHeaders: "Content-Type"
 };
