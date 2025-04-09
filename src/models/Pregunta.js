@@ -11,7 +11,10 @@ const Pregunta = sequelize.define('Pregunta',{
         allowNull: false },
     categoria: { 
         type: DataTypes.STRING, 
+        allowNull: false },
+    respuestas:{
+        type: DataTypes.JSON,
         allowNull: false }
-
+    
 });
 module.exports = Pregunta;

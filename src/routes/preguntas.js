@@ -3,13 +3,31 @@ const router = express.Router();
 const  Pregunta  = require('../models/Pregunta');
 
 //crear pregunta
-router.post('/', async (req , res) =>{
-    try{
-        const nueva = await Pregunta.create(req.body);
-        res.status(201).json(nueva);
-    }catch(error){
-        res.status(400).json({error: error.message})
 
+router.post('/', async (req, res) => {
+    try {
+        // Extraer datos de la solicitud
+        const { texto, peso, categoria } = req.body;
+        
+        // Calcular los valores de respuesta automáticamente
+        const respuestas = {
+            "Si": parseFloat(peso),
+            "Si parcialmente": parseFloat(peso) / 2,
+            "No": 0,
+            "N/A": 0
+        };
+        
+        // Crear la nueva pregunta con los valores calculados
+        const nueva = await Pregunta.create({
+            texto,
+            peso,
+            categoria,
+            respuestas
+        });
+        
+        res.status(201).json(nueva);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 });
 
