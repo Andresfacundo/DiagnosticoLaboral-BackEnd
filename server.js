@@ -18,11 +18,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 
-// app.use('/api', verificarAuth);
 app.use('/api/auth', require('./src/routes/auth.js'));
-app.use('/api/empleadores', verificarAuth,  require('./src/routes/empleadores.js'));
-app.use('/api/preguntas', [verificarAuth, esAdmin], require('./src/routes/preguntas.js'));
-app.use('/api/respuestas', verificarAuth, require('./src/routes/respuestas.js',));
+app.use('/api/empleadores',  require('./src/routes/empleadores.js'));
+app.use('/api/preguntas',  require('./src/routes/preguntas.js'));
+app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
 
 syncDatabase();
 app.listen(port, () => {

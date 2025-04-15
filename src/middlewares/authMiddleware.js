@@ -34,7 +34,7 @@ const esSuperAdmin = (req, res, next) => {
     });
   }
   
-  if (req.usuario.rol !== 'superadmin') {
+  if (req.usuario.rol !== 'superadmin' && req.usuario.rol !== 'admin') {
     return res.status(403).json({
       msg:'No tienes permisos para esta acción'
     });

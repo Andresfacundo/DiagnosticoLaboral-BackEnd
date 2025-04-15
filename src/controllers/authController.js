@@ -5,6 +5,14 @@ const crearUsuario = async (req, res) => {
     try {
         const { email, password, nombre, rol } = req.body;
 
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                msg: 'El email no es válido'
+            });
+        }
+
         // Verificar si ya existe el email
         const usuarioExistente = await Usuario.findOne({ where: { email } });
         if (usuarioExistente) {
