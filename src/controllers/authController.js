@@ -1,4 +1,4 @@
-const Usuario = require('../models/usuario');
+const Usuario = require('../models/Usuario.js');
 const { generarJWT } = require('../utils/jwt');
 const tokenBlackList = require('../models/TokenBlackList');
 const jwt = require('jsonwebtoken');
