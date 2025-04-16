@@ -52,4 +52,4 @@ async function crearSuperAdmin() {
   }
 }
 
-crearSuperAdmin();
+module.exports = crearSuperAdmin;
