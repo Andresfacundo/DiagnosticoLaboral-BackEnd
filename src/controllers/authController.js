@@ -1,5 +1,8 @@
 const Usuario = require('../models/usuario');
 const { generarJWT } = require('../utils/jwt');
+const tokenBlackList = require('../models/TokenBlackList');
+const jwt = require('jsonwebtoken');
+
 
 const crearUsuario = async (req, res) => {
     try {
@@ -93,7 +96,38 @@ const login = async (req, res) => {
     }
 };
 
+const logout = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(400).json({ msg: 'Token no proporcionado' });
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        // Decodificar el token para obtener fecha de expiración
+        const decoded = jwt.decode(token);
+
+        if (!decoded || !decoded.exp) {
+            return res.status(400).json({ msg: 'Token inválido' });
+        }
+
+        const expiresAt = new Date(decoded.exp * 1000); // Convertir de segundos a ms
+
+        // Guardar token en la blacklist
+        await tokenBlackList.create({ token, expiresAt });
+
+        res.json({ msg: 'Sesión cerrada correctamente. Token invalidado' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Error en el servidor durante el cierre de sesión' });
+    }
+};
+
 module.exports = {
     crearUsuario,
-    login
+    login,
+    logout
 };
