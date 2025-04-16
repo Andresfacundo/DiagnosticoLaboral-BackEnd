@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
+const crearSuperAdmin = require('./scripts.js')
 
 const port = process.env.DB_PORT;
 
@@ -23,7 +24,9 @@ app.use('/api/empleadores',  require('./src/routes/empleadores.js'));
 app.use('/api/preguntas',  require('./src/routes/preguntas.js'));
 app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
 
-syncDatabase();
+syncDatabase().then(() =>{
+    crearSuperAdmin();
+});
 app.listen(port, () => {
     console.log(`Servidor corriendo en:${port}`);
 });
