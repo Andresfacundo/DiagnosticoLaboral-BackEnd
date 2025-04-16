@@ -24,9 +24,24 @@ app.use('/api/empleadores',  require('./src/routes/empleadores.js'));
 app.use('/api/preguntas',  require('./src/routes/preguntas.js'));
 app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
 
-syncDatabase().then(() =>{
-    crearSuperAdmin();
-});
-app.listen(port, () => {
-    console.log(`Servidor corriendo en:${port}`);
-});
+app.get('/', (req, res) => {
+    res.status(200).json({ status: 'Server is running' });
+  });
+
+  async function iniciarServidor() {
+    await syncDatabase();
+    
+    // Crear superadmin SIN llamar a process.exit()
+    try {
+      await crearSuperAdmin();
+    } catch (error) {
+      console.error('Error al crear superadmin:', error);
+    }
+    
+    // Iniciar servidor después de crear el superadmin
+    app.listen(port, () => {
+      console.log(`Servidor corriendo en puerto ${port}`);
+    });
+  }
+  
+  iniciarServidor();
