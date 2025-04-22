@@ -13,9 +13,9 @@ router.post('/', verificarAuth, esAdmin, esSuperAdmin, async (req, res) => {
         // Calcular los valores de respuesta automáticamente
         const respuestas = {
             "Si": parseFloat(peso),
-            "Si parcialmente": parseFloat(peso) / 2,
+            "Parcialmente": parseFloat(peso) / 2,
             "No": 0,
-            "N/A": 0
+            "No aplica": 0
         };
 
         // Crear la nueva pregunta con los valores calculados
@@ -61,7 +61,7 @@ router.put('/:id', verificarAuth,esAdmin,esSuperAdmin, async (req, res) => {
         await pregunta.update(req.body);
         res.json(pregunta);
     } catch (error) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: error.message });
     }
 });
 

@@ -32,10 +32,10 @@ router.get("/:id" , async (req, res) =>{
   try {
     const { id } = req.params;
     const respuesta = await Respuesta.findByPk(id);
-    res.json(respuesta);
     if (!respuesta) {
       return res.status(404).json({ error: "Respuesta no encontrada" });
     }
+    res.json(respuesta);
   }catch (error) {
     res.status(500).json({ error: error.message });
   }
