@@ -2,6 +2,8 @@ const sequelize = require("../../db");
 const Empleador = require("./Empleador");
 const Pregunta = require("./Pregunta");
 const Respuesta = require("./Respuesta");
+const Usuario = require('./Usuario');
+const intereses = require('./interesesModels');
 // const TokenBlacklist = require("./TokenBlackList");
 
 // Aquí puedes establecer asociaciones si necesitas más relaciones
@@ -22,6 +24,8 @@ module.exports = {
   Empleador,
   Pregunta,
   Respuesta,
+  intereses,
+  Usuario,
   // TokenBlacklist,
   syncDatabase
 };
