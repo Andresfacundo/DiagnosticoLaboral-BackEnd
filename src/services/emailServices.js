@@ -14,7 +14,7 @@ const sendEmail = async (data) => {
 
     const mailOptions = {
         from: `"Formulario Contacto - Gómez Valencia Abogados" <andresfelipefacundo@gmail.com>`,
-        to: 'andresfacundo2000@gmail.com', 
+        to: 'juandaniel@gomezvalencia.com', 
         subject: 'Nuevo mensaje de contacto - Gómez Valencia Abogados',
         html: `
             <h3>Nuevo mensaje de contacto desde la web</h3>
