@@ -1,5 +1,5 @@
 const procesarDatos = require("../utils/procesarDatos");
-const Diagnostico = require("../models/diagnostico");
+const Diagnostico = require("../models/Diagnostico");
 
 async function procesarYGuardarDiagnostico(respuestas, preguntas) {
     const resultado = procesarDatos(respuestas, preguntas);
