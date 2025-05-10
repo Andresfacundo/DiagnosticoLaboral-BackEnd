@@ -25,6 +25,7 @@ app.use('/api/auth', require('./src/routes/auth.js'));
 app.use('/api/empleadores',  require('./src/routes/empleadores.js'));
 app.use('/api/preguntas',  require('./src/routes/preguntas.js'));
 app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
+app.use('/api/diagnostico', require('./src/routes/diagnosticoRoutes.js'));
 
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'Server is running' });
