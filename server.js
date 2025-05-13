@@ -13,7 +13,7 @@ const port = process.env.DB_PORT;
 const corsOptions = {
     origin:[
       `${process.env.URL}`,
-      `${process.env.URL2}`,
+      `${process.env.URL_TWO}`,
     ], 
     methods: "GET, POST, PUT, DELETE",
     allowedHeaders: "Content-Type, Authorization, x-token"
