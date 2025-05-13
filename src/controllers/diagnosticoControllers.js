@@ -1,6 +1,7 @@
 const {
     procesarYGuardarDiagnostico,
-    obtenerDiagnosticoPorEmpleador
+    obtenerDiagnosticoPorEmpleador,
+    eliminarDiagnosticoPorId
 } = require("../services/historialServices");
 
 const procesarDiagnostico = async (req, res) => {
@@ -43,9 +44,27 @@ const getDiagnosticoById = async (req, res) => {
     }
 };
 
+const eliminarDiagnostico = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resultado = await eliminarDiagnosticoPorId(id);
+        if (!resultado) {
+            return res.status(404).json({ message: "Diagnóstico no encontrado" });
+        }
+        res.json({ message: "Diagnóstico eliminado correctamente" });
+    } catch (error) {
+        console.error("Error al eliminar el diagnóstico:", error);
+        res.status(500).json({ 
+            message: "Error al eliminar el diagnóstico",             
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     procesarDiagnostico,
     getDiagnosticos,
-    getDiagnosticoById
+    getDiagnosticoById,
+    eliminarDiagnostico
 };
 

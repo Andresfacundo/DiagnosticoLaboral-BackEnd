@@ -21,7 +21,23 @@ async function obtenerDiagnosticoPorEmpleador(id = null) {
     });
 }
 
+const eliminarDiagnosticoPorId = async (id) => {
+    try {
+        const diagnostico = await Diagnostico.findByPk(id);
+        if (!diagnostico) return null;
+
+        await diagnostico.destroy(); 
+
+        return diagnostico;
+    } catch (error) {
+        console.error("Error al eliminar el diagnóstico por ID:", error);
+        throw error;
+    }
+};
+
+
 module.exports = {
     procesarYGuardarDiagnostico,
-    obtenerDiagnosticoPorEmpleador
+    obtenerDiagnosticoPorEmpleador,
+    eliminarDiagnosticoPorId
 };
