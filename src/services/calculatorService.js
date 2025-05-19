@@ -1,7 +1,8 @@
 
 const constants = {
     salarioMinimo: 1423500,
-    auxilioDeTransporte: 200000
+    auxilioDeTransporte: 200000,
+    UVT: 49799
   };
   
   const calculateSalaryDetails = ({
@@ -14,7 +15,9 @@ const constants = {
     retencionFuente = 0,
     exonerado,
     claseRiesgo,
-    auxilioDeTransporte
+    auxilioDeTransporte,
+    calcularRetencion = true, 
+    ingresosNoConstitutivos = 0
   }) => {
     
     const auxilioTransporte =   auxilioDeTransporte === "Si" && salario + otrosPagosSalariales <= (constants.salarioMinimo * 2)
@@ -31,6 +34,18 @@ const constants = {
     const tasaSaludEmpleador = exonerado == 'Si' ? (ibc >= constants.salarioMinimo * 10 ? 0.085 : 0) : (exonerado == 'No' ? 0.085 : 0);
     const seguridadSocial = calculateSeguridadSocial(ibc, salario, otrosPagosSalariales, pensionado,excedente,tasaSaludEmpleador,aportesSena,aportesIcbf,claseRiesgo);
     const prestacionesSociales = calculatePrestacionesSociales(tipoSalario, salario, otrosPagosSalariales, auxilioTransporte);
+
+      // Si se solicitó cálculo automático de retención, calculamos la retención en la fuente
+    let retencionCalculada = retencionFuente;
+    if (calcularRetencion) {
+      retencionCalculada = calcularRetencionFuente2025({
+        totalPagos: salario + otrosPagosSalariales + otrosPagosNoSalariales,
+        ingresosNoConstitutivos: ingresosNoConstitutivos,
+        deducciones: deducciones
+      });
+    }
+
+
     const proyecciones = calculateProyecciones(seguridadSocial, prestacionesSociales, salario, otrosPagosSalariales, otrosPagosNoSalariales, auxilioTransporte,deducciones,retencionFuente);
     return {
         totalRemuneracion,
@@ -46,7 +61,7 @@ const constants = {
         otrosPagosNoSalariales,
         pensionado,
         deducciones ,
-        retencionFuente,
+        retencionFuente: retencionCalculada,
         exonerado,
         claseRiesgo,
         auxilioDeTransporte
@@ -244,7 +259,52 @@ function getRiesgoLaboralPorcentaje(claseRiesgo) {
       auxilioTransporte
     };
   }
+
+  function calcularRetencionFuente2025({totalPagos, ingresosNoConstitutivos, deducciones}) {
+  // Valor UVT para 2025
+  const UVT = constants.UVT;
+
+  // Subtotal 
+  const subtotal = totalPagos - ingresosNoConstitutivos - deducciones;
+
+  // Renta exenta del 25% con tope de 790 UVT (anual)
+  const rentaExenta25 = Math.min(subtotal * 0.25, (UVT * 790) / 12);
+  
+  // Base gravable
+  const baseGravable = subtotal - rentaExenta25;
+  
+  // Si no hay base gravable no hay retefuente
+  if (baseGravable <= 0) return 0;
+
+  // Convertir base gravable a UVT
+  const baseUVT = baseGravable / UVT;    
+  
+  let retencionUVT = 0;
+  
+  if (baseUVT <= 95) {
+    retencionUVT = 0;
+  } else if (baseUVT <= 150) {
+    retencionUVT = (baseUVT - 95) * 0.19;
+  } else if (baseUVT <= 360) {
+    retencionUVT = ((baseUVT - 150) * 0.28) + 10;
+  } else if (baseUVT <= 640) {
+    retencionUVT = ((baseUVT - 360) * 0.33) + 69;
+  } else if (baseUVT <= 945) {
+    retencionUVT = ((baseUVT - 640) * 0.35) + 162;
+  } else if (baseUVT <= 2300) {
+    retencionUVT = ((baseUVT - 945) * 0.37) + 268;
+  } else {
+    retencionUVT = ((baseUVT - 2300) * 0.39) + 770;
+  }    
+
+  // Calcular en pesos y redondear al múltiplo de 1000 más cercano
+  const retencionPesos = retencionUVT * UVT;
+  const retencionRedondeada = Math.round(retencionPesos / 1000) * 1000;
+
+  return retencionRedondeada;
+}
   
   module.exports = {
-    calculateSalaryDetails
+    calculateSalaryDetails,
+    calcularRetencionFuente2025
   };

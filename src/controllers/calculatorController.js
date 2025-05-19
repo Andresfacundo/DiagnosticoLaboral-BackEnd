@@ -11,7 +11,9 @@ const calculateSalary = (req, res) => {
     retencionFuente,
     exonerado,
     claseRiesgo,
-    auxilioDeTransporte
+    auxilioDeTransporte,
+    calcularRetencion,
+    ingresosNoConstitutivos
   } = req.body;
 
   const result = calculatorService.calculateSalaryDetails({
@@ -24,12 +26,27 @@ const calculateSalary = (req, res) => {
     retencionFuente,
     exonerado,
     claseRiesgo,
-    auxilioDeTransporte
+    auxilioDeTransporte,
+    calcularRetencion,
+    ingresosNoConstitutivos
   });
 
   res.json(result);
 };
 
+const calcularRetencion = (req, res) => {
+  const { totalPagos, ingresosNoConstitutivos, deducciones } = req.body;
+
+  const retencion = calculatorService.calcularRetencionFuente2025({
+    totalPagos,
+    ingresosNoConstitutivos,
+    deducciones
+  });
+
+  res.json({ retencion });
+};
+
 module.exports = {
-  calculateSalary
+  calculateSalary,
+  calcularRetencion
 };
