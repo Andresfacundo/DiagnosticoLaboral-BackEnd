@@ -245,7 +245,7 @@ function calcularRetencionFuente2025({totalPagos, ingresosNoConstitutivos, deduc
   const subtotal = totalPagos - ingresosNoConstitutivos - deducciones;
 
   // Renta exenta del 25% con tope de 790 UVT (anual)
-  const rentaExenta25 = Math.min(subtotal * 0.25, (UVT * 790) / 12);
+  const rentaExenta25 = Math.min(subtotal * 0.25, (UVT * 790) / 1);
   
   // Base gravable
   const baseGravable = subtotal - rentaExenta25;

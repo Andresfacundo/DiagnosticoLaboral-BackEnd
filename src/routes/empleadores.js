@@ -4,7 +4,6 @@ const Empleador = require('../models/Empleador');
 
 
 router.post('/', async (req , res ) => {
-    console.log(req.body);
     try {
         const nuevo = await Empleador.create(req.body);
         res.status(201).json(nuevo);        
