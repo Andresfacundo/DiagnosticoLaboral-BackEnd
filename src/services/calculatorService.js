@@ -1,8 +1,39 @@
-const constants = {
-  salarioMinimo: 1423500,
-  auxilioDeTransporte: 200000,
-  UVT: 49799
+const { Constants } = require('../models');
+
+let memoryConstants = null;
+
+async function loadConstantsFromDB() {
+  let constants = await Constants.findOne();
+  if (!constants) {
+    constants = await Constants.create({});
+  }
+  memoryConstants = {
+    salarioMinimo: constants.salarioMinimo,
+    auxilioDeTransporte: constants.auxilioDeTransporte,
+    UVT: constants.UVT
+  };
+}
+
+const getConstants = () => memoryConstants;
+
+const updateConstants = async ({ salarioMinimo, auxilioDeTransporte, UVT }) => {
+  let constants = await Constants.findOne();
+  if (!constants) {
+    constants = await Constants.create({});
+  }
+  if (salarioMinimo) constants.salarioMinimo = salarioMinimo;
+  if (auxilioDeTransporte) constants.auxilioDeTransporte = auxilioDeTransporte;
+  if (UVT) constants.UVT = UVT;
+  await constants.save();
+  memoryConstants = {
+    salarioMinimo: constants.salarioMinimo,
+    auxilioDeTransporte: constants.auxilioDeTransporte,
+    UVT: constants.UVT
+  };
+  return memoryConstants;
 };
+
+loadConstantsFromDB();
 
 const calculateSalaryDetails = ({
   tipoSalario,
@@ -19,8 +50,8 @@ const calculateSalaryDetails = ({
   ingresosNoConstitutivos = 0
 }) => {
   
-  const auxilioTransporte = auxilioDeTransporte === "Si" && salario + otrosPagosSalariales <= (constants.salarioMinimo * 2)
-  ? constants.auxilioDeTransporte 
+  const auxilioTransporte = auxilioDeTransporte === "Si" && salario + otrosPagosSalariales <= (memoryConstants.salarioMinimo * 2)
+  ? memoryConstants.auxilioDeTransporte 
   : 0;
   const totalIngresos = salario + auxilioTransporte + otrosPagosSalariales + otrosPagosNoSalariales;
 
@@ -28,9 +59,9 @@ const calculateSalaryDetails = ({
   const cuarentaPorciento = totalRemuneracion * 0.4;
   const excedente = calculateExcedente(otrosPagosNoSalariales, cuarentaPorciento);
   const ibc = calculateIBC(tipoSalario, salario, otrosPagosSalariales, excedente);
-  const aportesSena = exonerado == 'Si' ? (ibc >= constants.salarioMinimo * 10 ? 0.02 : 0) : (exonerado == 'No' ? 0.02 : 0);
-  const aportesIcbf = exonerado == 'Si' ? (ibc >= constants.salarioMinimo * 10 ? 0.03 : 0) : (exonerado == 'No' ? 0.03 : 0);
-  const tasaSaludEmpleador = exonerado == 'Si' ? (ibc >= constants.salarioMinimo * 10 ? 0.085 : 0) : (exonerado == 'No' ? 0.085 : 0);
+  const aportesSena = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.02 : 0) : (exonerado == 'No' ? 0.02 : 0);
+  const aportesIcbf = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.03 : 0) : (exonerado == 'No' ? 0.03 : 0);
+  const tasaSaludEmpleador = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.085 : 0) : (exonerado == 'No' ? 0.085 : 0);
   const seguridadSocial = calculateSeguridadSocial(ibc, salario, otrosPagosSalariales, pensionado, excedente, tasaSaludEmpleador, aportesSena, aportesIcbf, claseRiesgo);
   const prestacionesSociales = calculatePrestacionesSociales(tipoSalario, salario, otrosPagosSalariales, auxilioTransporte);
 
@@ -95,13 +126,13 @@ function calculateIBC(tipoSalario, salario, otrosPagosSalariales, excedente) {
   } else if (tipoSalario === 'Integral') {
     return ((salario + otrosPagosSalariales) * 0.7) + excedente;
   } else if (tipoSalario === 'Medio tiempo') {
-    return constants.salarioMinimo;
+    return memoryConstants.salarioMinimo;
   }
   return 0;
 }
 
 function calculateFSPPercentage(ibc) {
-  const ratio = ibc / constants.salarioMinimo;
+  const ratio = ibc / memoryConstants.salarioMinimo;
   if (ratio >= 4 && ratio < 16) return 0.01;
   if (ratio >= 16 && ratio <= 17) return 0.012;
   if (ratio > 17 && ratio <= 18) return 0.014;
@@ -209,9 +240,9 @@ function calculateProyecciones(seguridadSocial, prestacionesSociales, salario, o
     salario +
     otrosPagosSalariales +
     otrosPagosNoSalariales +
-    auxilioTransporte -
-    aportesTrabajador -
-    retencionFuente -
+    auxilioTransporte - 
+    aportesTrabajador - 
+    retencionFuente - 
     deducciones;
 
   const costoTotalEmpleador =
@@ -239,7 +270,7 @@ function calculateProyecciones(seguridadSocial, prestacionesSociales, salario, o
 
 function calcularRetencionFuente2025({totalPagos, ingresosNoConstitutivos, deducciones}) {
   // Valor UVT para 2025
-  const UVT = constants.UVT;
+  const UVT = memoryConstants.UVT;
 
   // Subtotal 
   const subtotal = totalPagos - ingresosNoConstitutivos - deducciones;
@@ -283,5 +314,7 @@ function calcularRetencionFuente2025({totalPagos, ingresosNoConstitutivos, deduc
 
 module.exports = {
   calculateSalaryDetails,
-  calcularRetencionFuente2025
+  calcularRetencionFuente2025,
+  getConstants,
+  updateConstants,
 };

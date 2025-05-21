@@ -16,7 +16,7 @@ const corsOptions = {
       `${process.env.URL}`,
       `${process.env.URL_TWO}`,
     ], 
-    methods: "GET, POST, PUT, DELETE",
+    methods: "GET, POST, PUT, DELETE,PATCH",
     allowedHeaders: "Content-Type, Authorization, x-token"
 };
 

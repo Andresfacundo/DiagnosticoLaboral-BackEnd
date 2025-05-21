@@ -4,6 +4,7 @@ const Pregunta = require("./Pregunta");
 const Respuesta = require("./Respuesta");
 const Usuario = require('./Usuario');
 const intereses = require('./interesesModels');
+const Constants = require("./Constants");
 // const TokenBlacklist = require("./TokenBlackList");
 
 // Aquí puedes establecer asociaciones si necesitas más relaciones
@@ -26,6 +27,7 @@ module.exports = {
   Respuesta,
   intereses,
   Usuario,
+  Constants,
   // TokenBlacklist,
   syncDatabase
 };

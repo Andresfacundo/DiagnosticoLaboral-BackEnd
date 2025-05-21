@@ -1,5 +1,6 @@
 const calculatorService = require('../services/calculatorService');
 
+
 const calculateSalary = (req, res) => {
   const {
     tipoSalario,
@@ -46,7 +47,20 @@ const calcularRetencion = (req, res) => {
   res.json({ retencion });
 };
 
+const updateConstants = async (req, res) => {
+  const { salarioMinimo, auxilioDeTransporte, UVT } = req.body;
+  const updatedConstants = await calculatorService.updateConstants({ salarioMinimo, auxilioDeTransporte, UVT });
+  res.json({ message: 'Constantes actualizadas exitosamente', constants: updatedConstants });
+};
+
+const getConstants = async (req, res) => {
+  const currentConstants = await calculatorService.getConstants();
+  res.json(currentConstants);
+};
+
 module.exports = {
   calculateSalary,
-  calcularRetencion
+  calcularRetencion,
+  getConstants,
+  updateConstants
 };
