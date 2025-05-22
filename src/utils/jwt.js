@@ -8,7 +8,7 @@ const generarJWT = (usuario) => {
             rol: usuario.rol
         },
         process.env.JWT_SECRET,
-        { expiresIn: '5h' }
+        { expiresIn: '8h' }
     );
 };
 
