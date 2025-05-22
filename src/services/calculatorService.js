@@ -3,6 +3,7 @@ const { Constants } = require('../models');
 let memoryConstants = null;
 
 async function loadConstantsFromDB() {
+  await Constants.sync({alter: true})
   let constants = await Constants.findOne();
   if (!constants) {
     constants = await Constants.create({});
