@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Pregunta = require('../models/Pregunta');
-const { verificarAuth, esAdmin, esSuperAdmin } = require('../middlewares/authMiddleware');
+const { verificarAuth, esAdmin, asociado } = require('../middlewares/authMiddleware');
 
 //crear pregunta
 
-router.post('/', verificarAuth, esAdmin, esSuperAdmin, async (req, res) => {
+router.post('/', verificarAuth, esAdmin, asociado, async (req, res) => {
     try {
         // Extraer datos de la solicitud
         const { texto, peso, categoria } = req.body;
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: error.message })
     }
 });
-router.get('/categoria/:categoria', verificarAuth,esAdmin,esSuperAdmin, async (req, res) => {
+router.get('/categoria/:categoria', verificarAuth,esAdmin,asociado, async (req, res) => {
     try {
         const { categoria } = req.params;
         const preguntas = await Pregunta.findAll({
@@ -54,7 +54,7 @@ router.get('/categoria/:categoria', verificarAuth,esAdmin,esSuperAdmin, async (r
 });
 
 // editar una pregunta
-router.put('/:id', verificarAuth,esAdmin,esSuperAdmin, async (req, res) => {
+router.put('/:id', verificarAuth,esAdmin,asociado, async (req, res) => {
     try {
         const pregunta = await Pregunta.findByPk(req.params.id);
         if (!pregunta) return res.status(404).json({ error: 'Pregunta no encontrada' });
@@ -66,7 +66,7 @@ router.put('/:id', verificarAuth,esAdmin,esSuperAdmin, async (req, res) => {
 });
 
 // eliminar una pregunta
-router.delete('/:id', verificarAuth,esAdmin,esSuperAdmin, async (req, res) => {
+router.delete('/:id', verificarAuth,esAdmin,asociado, async (req, res) => {
     try {
         const pregunta = await Pregunta.findByPk(req.params.id);
         if (!pregunta) return res.status(404).json({ error: 'Pregunta no encontrada' });

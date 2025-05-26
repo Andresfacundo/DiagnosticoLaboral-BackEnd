@@ -45,14 +45,14 @@ const verificarAuth = async (req, res, next) => {
   }
 };
 
-const esSuperAdmin = (req, res, next) => {
+const esAdmin = (req, res, next) => {
   if (!req.usuario) {
     return res.status(500).json({
       msg: 'Se quiere verificar el rol sin validar el token primero'
     });
   }
   
-  if (req.usuario.rol !== 'superadmin' && req.usuario.rol !== 'admin') {
+  if (req.usuario.rol !== 'admin' && req.usuario.rol !== 'asociado') {
     return res.status(403).json({
       msg:'No tienes permisos para esta acción'
     });
@@ -61,14 +61,14 @@ const esSuperAdmin = (req, res, next) => {
   next();
 };
 
-const esAdmin = (req, res, next) => {
+const asociado = (req, res, next) => {
   if (!req.usuario) {
     return res.status(500).json({
       msg: 'Se quiere verificar el rol sin validar el token primero'
     });
   }
   
-  if (req.usuario.rol !== 'admin' && req.usuario.rol !== 'superadmin') {
+  if (req.usuario.rol !== 'asociado' && req.usuario.rol !== 'admin') {
     return res.status(403).json({
       msg: 'No tienes permisos de administrador'
     });
@@ -77,25 +77,10 @@ const esAdmin = (req, res, next) => {
   next();
 };
 
-const esEmpleador = (req, res, next) => {
-  if (!req.usuario) {
-    return res.status(500).json({
-      msg: 'Se quiere verificar el rol sin validar el token primero'
-    });
-  }
-  
-  if (req.usuario.rol !== 'empleador' && req.usuario.rol !== 'admin' && req.usuario.rol !== 'superadmin') {
-    return res.status(403).json({
-      msg: 'No tienes permisos de empleador'
-    });
-  }
-  
-  next();
-};
+
 
 module.exports = {
   verificarAuth,
-  esSuperAdmin,
+  asociado,
   esAdmin,
-  esEmpleador
 };

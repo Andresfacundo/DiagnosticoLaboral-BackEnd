@@ -20,8 +20,8 @@ const Usuario = sequelize.define('Usuario',{
         allowNull: false
     },
     rol:{  
-        type: DataTypes.ENUM('superadmin', 'admin', 'user','invitado'),
-        defaultValue: 'user'
+        type: DataTypes.ENUM('admin', 'socio', 'asociado','invitado'),
+        defaultValue: 'asociado'
     },
     activo: {
         type: DataTypes.BOOLEAN,

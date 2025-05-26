@@ -7,6 +7,7 @@ const {syncDatabase} = require("./src/models/index.js");
 const contactoRoutes = require('./src/routes/contactoRoutes.js')
 const intereses = require('./src/routes/interesesRoutes.js')
 const calculatorRoutes = require("./src/routes/calculatorRoutes");
+const categorias = require("./src/routes/categoriasRoutes.js")
 const port = process.env.DB_PORT;
 
 
@@ -31,6 +32,7 @@ app.use('/api/preguntas',  require('./src/routes/preguntas.js'));
 app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
 app.use('/api/diagnostico', require('./src/routes/diagnosticoRoutes.js'));
 app.use("/api", calculatorRoutes);
+app.use("/api/", categorias)
 
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'Server is running' });

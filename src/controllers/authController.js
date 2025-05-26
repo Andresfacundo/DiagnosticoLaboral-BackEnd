@@ -24,12 +24,12 @@ const crearUsuario = async (req, res) => {
             });
         }
 
-        // Crear usuario (ahora solo accesible por superadmin)
+        // Crear usuario (ahora solo accesible por admin)
         const usuario = await Usuario.create({
             email,
             password,
             nombre,
-            rol: rol || 'user' // El superadmin puede especificar cualquier rol
+            rol: rol || 'asociado' // El admin puede especificar cualquier rol
         });
         res.status(201).json({
             msg: 'Usuario creado correctamente',

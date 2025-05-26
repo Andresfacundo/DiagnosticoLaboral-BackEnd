@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { crearUsuario, login, logout } = require('../controllers/authController');
-const { verificarAuth, esSuperAdmin } = require('../middlewares/authMiddleware');
+const { verificarAuth, esAdmin } = require('../middlewares/authMiddleware');
 
 const router = Router();
 
@@ -8,7 +8,7 @@ const router = Router();
 router.post('/login', login);
 router.post('/logout', verificarAuth, logout);
 
-// Ruta protegida para crear usuarios - solo superadmin
-router.post('/usuarios', [verificarAuth, esSuperAdmin], crearUsuario);
+// Ruta protegida para crear usuarios - solo admin
+router.post('/usuarios', [verificarAuth, esAdmin], crearUsuario);
 
 module.exports = router;
