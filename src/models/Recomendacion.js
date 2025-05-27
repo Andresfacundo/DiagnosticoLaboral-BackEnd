@@ -4,7 +4,7 @@ const Categoria = require('./Categoria');
 
 const Recomendacion = sequelize.define('Recomendacion', {
   texto: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false
   },
   categoriaId: {
