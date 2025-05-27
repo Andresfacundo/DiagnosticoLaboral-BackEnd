@@ -22,10 +22,39 @@ const listarCategorias = async (req, res) => {
   }
 };
 
+// Editar una categoría
+const editarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const categoria = await Categoria.findByPk(id);
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    categoria.nombre = nombre || categoria.nombre;
+    await categoria.save();
+    res.json(categoria);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Eliminar una categoría
+const eliminarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const categoria = await Categoria.findByPk(id);
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    await categoria.destroy();
+    res.json({ mensaje: 'Categoría eliminada correctamente' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 // Crear una recomendación para una categoría
 const crearRecomendacion = async (req, res) => {
   try {
-    const { texto, categoriaId } = req.body;
+    const { texto } = req.body;
+    const { categoriaId } = req.params;
     if (!texto || !categoriaId) return res.status(400).json({ error: 'Texto y categoriaId son obligatorios' });
     // Verificar que la categoría exista
     const categoria = await Categoria.findByPk(categoriaId);
@@ -57,10 +86,47 @@ const listarRecomendacionesPorCategoria = async (req, res) => {
   }
 };
 
+// Editar una recomendación
+const editarRecomendacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { texto, categoriaId } = req.body;
+    const recomendacion = await Recomendacion.findByPk(id);
+    if (!recomendacion) return res.status(404).json({ error: 'Recomendación no encontrada' });
+    if (categoriaId) {
+      const categoria = await Categoria.findByPk(categoriaId);
+      if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+      recomendacion.categoriaId = categoriaId;
+    }
+    recomendacion.texto = texto || recomendacion.texto;
+    await recomendacion.save();
+    res.json(recomendacion);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Eliminar una recomendación
+const eliminarRecomendacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recomendacion = await Recomendacion.findByPk(id);
+    if (!recomendacion) return res.status(404).json({ error: 'Recomendación no encontrada' });
+    await recomendacion.destroy();
+    res.json({ mensaje: 'Recomendación eliminada correctamente' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   crearCategoria,
   listarCategorias,
   crearRecomendacion,
   listarRecomendacionesPorCategoria,
-  listarRecomendaciones
+  listarRecomendaciones,
+  editarCategoria,
+  eliminarCategoria,
+  editarRecomendacion,
+  eliminarRecomendacion
 };
