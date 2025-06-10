@@ -1,7 +1,13 @@
-const procesarDatos = (respuestas, preguntas) => {
+const procesarDatos = (respuestas, preguntas, categorias = []) => {
     const respuestasConDetalles = respuestas.map(respuesta => {
         const pregunta = preguntas.find(p => p.id === respuesta.id);
         return { ...respuesta, pregunta };
+    });
+
+    // Crear un mapa de categorías por ID para fácil acceso
+    const categoriaMap = {};
+    categorias.forEach(cat => {
+        categoriaMap[cat.id] = cat.nombre;
     });
 
     const categoriasUnicas = [...new Set(preguntas.map(p => p.categoria))];
@@ -13,13 +19,11 @@ const procesarDatos = (respuestas, preguntas) => {
         return Math.max(...Object.values(respuestas).filter(valor => typeof valor === 'number'));
     }
 
-
     function calcularCumplimiento(respuesta, respuestas, pesoTotal) {
         if (!respuestas || !pesoTotal) return 0;
         const valor = respuestas[respuesta] || 0;
         return (valor / pesoTotal) * 100;
     }
-
 
     function obtenerValorRespuesta(respuesta, pregunta) {
         if (pregunta.respuestas && pregunta.respuestas[respuesta] !== undefined) {
@@ -37,6 +41,9 @@ const procesarDatos = (respuestas, preguntas) => {
 
     categoriasUnicas.forEach(categoria => {
         const respuestasCat = respuestasConDetalles.filter(r => r.pregunta && r.pregunta.categoria === categoria);
+        
+        // Obtener el nombre de la categoría (puede ser ID o nombre)
+        const nombreCategoria = categoriaMap[categoria] || categoria;
 
         const conteo = {
             Si: 0,
@@ -80,20 +87,23 @@ const procesarDatos = (respuestas, preguntas) => {
             ? (puntajeObtenido / puntajePosible) * 100
             : 0;
 
-        categoriasAnalizadas[categoria] = {
+        // Usar el nombre de la categoría como clave
+        categoriasAnalizadas[nombreCategoria] = {
             total: puntajePosible,
             cumplimiento: puntajeObtenido,
             porcentaje: porcentajeCumplimiento,
             preguntas: preguntasCategoria,
-            conteo: conteo
+            conteo: conteo,
+            categoriaId: categoria // Mantener el ID por si se necesita
         };
 
         puntajePorCategoria.push({
-            name: categoria,
+            name: nombreCategoria,
             value: porcentajeCumplimiento,
             puntajeObtenido,
             puntajePosible,
-            riesgo: porcentajeCumplimiento < 70
+            riesgo: porcentajeCumplimiento < 70,
+            categoriaId: categoria
         });
     });
 
@@ -119,9 +129,10 @@ const procesarDatos = (respuestas, preguntas) => {
         ? (puntajeTotal / puntajeMaximo) * 100
         : 0;
 
+    // Convertir áreas de riesgo para usar nombres en lugar de IDs
     const areasRiesgo = puntajePorCategoria
         .filter(cat => cat.riesgo)
-        .map(cat => cat.name);
+        .map(cat => cat.name); // Ya usa el nombre
 
     return {
         totalPreguntas,
