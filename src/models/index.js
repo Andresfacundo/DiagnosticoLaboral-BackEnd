@@ -18,7 +18,7 @@ Diagnostico.belongsTo(Empleador, {
 });
 Empleador.hasMany(Diagnostico, { 
     foreignKey: 'empleadorId',
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE' 
 });
 const syncDatabase = async () => {
   try {
