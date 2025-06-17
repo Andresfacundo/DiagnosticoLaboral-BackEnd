@@ -1,8 +1,9 @@
 const procesarDatos = require("../utils/procesarDatos");
 const Diagnostico = require("../models/Diagnostico");
-const { Categoria } = require("../models"); // Importar el modelo de Categoria
+const { Categoria } = require("../models"); 
+const Empleador = require("../models/Empleador");
 
-async function procesarYGuardarDiagnostico(respuestas, preguntas) {
+async function procesarYGuardarDiagnostico(respuestas, preguntas, empleadorId) {
     // Obtener todas las categorías para el procesamiento
     const categorias = await Categoria.findAll();
     
@@ -10,7 +11,8 @@ async function procesarYGuardarDiagnostico(respuestas, preguntas) {
     
     await Diagnostico.create({
         resultado,
-        creadoEn: new Date()
+        creadoEn: new Date(),
+        empleadorId
     });
     
     return resultado;
@@ -29,10 +31,20 @@ const eliminarDiagnosticoPorId = async (id) => {
     try {
         const diagnostico = await Diagnostico.findByPk(id);
         if (!diagnostico) return null;
+
+        const empleadorId = diagnostico.empleadorId;
+
+
         await diagnostico.destroy();
-        return diagnostico;
+
+        const empleador = await Empleador.findByPk(empleadorId);
+        if (empleador) {
+            await empleador.destroy();
+        }
+
+        return { diagnosticoEliminado: diagnostico, empleadorEliminado: empleador };
     } catch (error) {
-        console.error("Error al eliminar el diagnóstico por ID:", error);
+        console.error("Error al eliminar el diagnóstico y el empleador:", error);
         throw error;
     }
 };

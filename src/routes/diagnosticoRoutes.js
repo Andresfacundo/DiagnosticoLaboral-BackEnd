@@ -7,7 +7,7 @@ const {
     eliminarDiagnostico
 } = require("../controllers/diagnosticoControllers");
 
-router.post("/", procesarDiagnostico);
+router.post("/:empleadorId", procesarDiagnostico);
 router.get("/", getDiagnosticos);
 router.get("/:id", getDiagnosticoById);
 router.delete("/:id", eliminarDiagnostico);

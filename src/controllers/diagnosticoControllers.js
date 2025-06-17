@@ -7,7 +7,8 @@ const {
 const procesarDiagnostico = async (req, res) => {
     try {
         const { respuestas, preguntas } = req.body;
-        const resultado = await procesarYGuardarDiagnostico(respuestas, preguntas);
+        const { empleadorId } = req.params;
+        const resultado = await procesarYGuardarDiagnostico(respuestas, preguntas, empleadorId);
         res.status(201).json(resultado);
     } catch (error) {
         res.status(500).json({ message: "Error al procesar el diagnóstico", error });
@@ -48,14 +49,20 @@ const eliminarDiagnostico = async (req, res) => {
     try {
         const { id } = req.params;
         const resultado = await eliminarDiagnosticoPorId(id);
+
         if (!resultado) {
             return res.status(404).json({ message: "Diagnóstico no encontrado" });
         }
-        res.json({ message: "Diagnóstico eliminado correctamente" });
+
+        res.json({ 
+            message: "Diagnóstico y empleador eliminados correctamente",
+            diagnostico: resultado.diagnosticoEliminado,
+            empleador: resultado.empleadorEliminado
+        });
     } catch (error) {
         console.error("Error al eliminar el diagnóstico:", error);
-        res.status(500).json({ 
-            message: "Error al eliminar el diagnóstico",             
+        res.status(500).json({
+            message: "Error al eliminar el diagnóstico y empleador",
             error: error.message
         });
     }
