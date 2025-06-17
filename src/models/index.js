@@ -10,16 +10,7 @@ const Recomendacion = require('./Recomendacion');
 const Diagnostico = require('./Diagnostico');
 // const TokenBlacklist = require("./TokenBlackList");
 
-// Aquí puedes establecer asociaciones si necesitas más relaciones
 
-Diagnostico.belongsTo(Empleador, { 
-    foreignKey: 'empleadorId',
-    onDelete: 'CASCADE'
-});
-Empleador.hasMany(Diagnostico, { 
-    foreignKey: 'empleadorId',
-    onDelete: 'CASCADE' 
-});
 const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
