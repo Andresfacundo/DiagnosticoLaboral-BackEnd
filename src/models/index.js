@@ -12,6 +12,14 @@ const Diagnostico = require('./Diagnostico');
 
 // Aquí puedes establecer asociaciones si necesitas más relaciones
 
+Diagnostico.belongsTo(Empleador, { 
+    foreignKey: 'empleadorId',
+    onDelete: 'CASCADE'
+});
+Empleador.hasMany(Diagnostico, { 
+    foreignKey: 'empleadorId',
+    onDelete: 'CASCADE'
+});
 const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
@@ -26,6 +34,7 @@ const syncDatabase = async () => {
 
 module.exports = {
   Empleador,
+  Diagnostico,
   Pregunta,
   Respuesta,
   intereses,
@@ -33,7 +42,6 @@ module.exports = {
   Constants,
   Categoria,
   Recomendacion,
-  Diagnostico,
   // TokenBlacklist,
   syncDatabase
 };
