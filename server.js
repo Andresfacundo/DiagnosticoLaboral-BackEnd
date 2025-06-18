@@ -8,6 +8,7 @@ const contactoRoutes = require('./src/routes/contactoRoutes.js')
 const intereses = require('./src/routes/interesesRoutes.js')
 const calculatorRoutes = require("./src/routes/calculatorRoutes");
 const categorias = require("./src/routes/categoriasRoutes.js")
+const sendEmail = require('./src/routes/sendEmailRoutes.js');
 const port = process.env.DB_PORT;
 
 
@@ -33,6 +34,7 @@ app.use('/api/respuestas' , require('./src/routes/respuestas.js',));
 app.use('/api/diagnostico', require('./src/routes/diagnosticoRoutes.js'));
 app.use("/api", calculatorRoutes);
 app.use("/api/", categorias)
+app.use('/api/send-email', sendEmail);
 
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'Server is running' });
