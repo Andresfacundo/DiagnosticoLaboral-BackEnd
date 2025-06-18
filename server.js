@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
-// const crearSuperAdmin = require('./scripts.js')
+const crearSuperAdmin = require('./scripts.js')
 const {syncDatabase} = require("./src/models/index.js");
 const contactoRoutes = require('./src/routes/contactoRoutes.js')
 const intereses = require('./src/routes/interesesRoutes.js')
@@ -43,11 +43,11 @@ app.get('/', (req, res) => {
   async function iniciarServidor() {
     await syncDatabase();
     
-    // try {
-    //   await crearSuperAdmin();
-    // } catch (error) {
-    //   console.error('Error al crear superadmin:', error);
-    // }
+    try {
+      await crearSuperAdmin();
+    } catch (error) {
+      console.error('Error al crear superadmin:', error);
+    }
     
     app.listen(port, () => {
       console.log(`Servidor corriendo en puerto ${port}`);
