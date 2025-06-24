@@ -9,6 +9,10 @@ const intereses = require('./src/routes/interesesRoutes.js')
 const calculatorRoutes = require("./src/routes/calculatorRoutes");
 const categorias = require("./src/routes/categoriasRoutes.js")
 const sendEmail = require('./src/routes/sendEmailRoutes.js');
+
+const empleadosRoutes = require('./src/routes/empleadosRoutes.js');
+const turnosRoutes = require('./src/routes/turnosRoutes');
+const resumenRoutes = require('./src/routes/resumenRoutes');
 const port = process.env.DB_PORT;
 
 
@@ -35,6 +39,9 @@ app.use('/api/diagnostico', require('./src/routes/diagnosticoRoutes.js'));
 app.use("/api", calculatorRoutes);
 app.use("/api/", categorias)
 app.use('/api/send-email', sendEmail);
+app.use('/api/empleados', empleadosRoutes);
+app.use('/api/turnos', turnosRoutes);
+app.use('/api/resumen', resumenRoutes);
 
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'Server is running' });
