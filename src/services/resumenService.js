@@ -74,7 +74,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     const turnosEmpleado = turnos.filter((t) => String(t.empleadoId) === String(empleado.id));
     const salarioBase = Number(empleado.salarioBase) || 0;
     const salarioHora = salarioBase / HORAS_MENSUALES_ESTANDAR;
-    const esTrabajadorDireccion = ['direccion', 'confianza', 'manejo'].includes(empleado.tipoTrabajador);
+    const esTrabajadorDireccion = ['Direccion, confianza o manejo', 'Ordinario'].includes(empleado.tipoTrabajador);
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
     let totalHoras = 0;
@@ -148,7 +148,10 @@ function calcularResumenEmpleados(empleados, turnos) {
       recargoNocturno: recargoNocturno * salarioHora * 0.35
     };
 
-    const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0);
+    const totalPagar = Object.values(valores).reduce((sum, val) => sum + val , 0)* 0.92;
+    const costoTotal = Object.values(valores).reduce((sum, val) => sum + val , 0)* 1.3855;
+
+
 
     return {
       id: empleado.id,
@@ -170,6 +173,7 @@ function calcularResumenEmpleados(empleados, turnos) {
         Object.entries(valores).map(([k, v]) => [k, Math.max(0, Math.round(v))])
       ),
       totalPagar: Math.round(totalPagar),
+      costoTotal: Math.round(costoTotal),
       totalHoras: totalHoras.toFixed(2),
       // horasRegulares: horasRegulares.toFixed(2),
       horasExtra: horasExtra.toFixed(2),

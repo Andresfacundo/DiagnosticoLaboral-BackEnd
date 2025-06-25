@@ -21,7 +21,7 @@ function addTurno(data) {
 function updateTurno(id, data) { 
   const idx = turnos.findIndex(t => t.id === id);
   if (idx === -1) return null;
-  turnos[idx] = { ...turnos[idx], ...data, id }; // Mantén el id original
+  turnos[idx] = { ...turnos[idx], ...data, id };
   return turnos[idx];
 }
 
