@@ -1,24 +1,17 @@
 const empleadosService = require("./empleadosService");
 const turnosService = require("./turnosService");
+const colombianHolidays = require('colombian-holidays');
 
 const HORAS_MENSUALES_ESTANDAR = 230;
 const HORA_NOCTURNA_INICIO = 21;
 const HORA_NOCTURNA_FIN = 6;
 const HORAS_SEMANALES_MAXIMAS = 46;
-
-const diasFestivos = [
-  '2025-01-01', '2025-03-25', '2025-03-28', '2025-03-29',
-  '2025-05-01', '2025-05-13', '2025-06-03', '2025-05-24',
-  '2025-07-01', '2025-07-20', '2025-08-07', '2025-08-19',
-  '2025-10-14', '2025-11-04', '2025-11-11', '2025-12-08', '2025-12-25'
-];
+const RECARGO_FESTIVO = 0.75; // 75% sobre la hora ordinaria
 
 function esFestivo(fecha) {
-  const fechaStr = fecha.toISOString().split('T')[0];
-  return diasFestivos.includes(fechaStr);
+  return colombianHolidays.isHoliday(fecha);
 }
 
-// Calcula horas nocturnas entre 21:00 y 6:00, respetando minutos de descanso
 function calcularHorasNocturnas(horaInicio, horaFin, minutosDescanso = 0) {
   let inicio = horaInicio * 60;
   let fin = horaFin * 60;
@@ -80,6 +73,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     let totalHoras = 0;
     let horasExtra = 0;
     let recargoNocturno = 0;
+    let horasFestivas = 0;
 
     const detalleTurnos = turnosEmpleado.map((turno) => {
       const fecha = new Date(`${turno.dia}T00:00:00`);
@@ -110,18 +104,20 @@ function calcularResumenEmpleados(empleados, turnos) {
 
       // Calcular recargo nocturno solo para horas entre 21:00 y 6:00
       let recargoNocturnoTurno = 0;
-      let minutosTrabajados = 0;
       let inicioMin = horaInicio * 60;
       let finMin = horaFin * 60;
       if (finMin <= inicioMin) finMin += 24 * 60;
       for (let minuto = 0; minuto < (finMin - inicioMin); minuto++) {
         const horaReal = ((inicioMin + minuto) / 60) % 24;
         if (horaReal >= HORA_NOCTURNA_INICIO || horaReal < HORA_NOCTURNA_FIN) recargoNocturnoTurno++;
-        minutosTrabajados++;
       }
-
-      recargoNocturnoTurno = Math.max(0, recargoNocturnoTurno );
       recargoNocturno += recargoNocturnoTurno / 60;
+
+      // Marcar si es festivo usando la librería y sumar horas festivas
+      const esDiaFestivo = esFestivo(fecha);
+      if (esDiaFestivo) {
+        horasFestivas += tiempoTrabajado;
+      }
 
       return {
         empleado: `${empleado.nombre} ${empleado.apellido}`,
@@ -136,22 +132,21 @@ function calcularResumenEmpleados(empleados, turnos) {
         horasDiurnas: horasDiurnas.toFixed(2),
         horasExtra: horasExtraTurno.toFixed(2),
         horasSemanales: horasSemanales.toFixed(2),
-        esTrabajadorDireccion
+        esTrabajadorDireccion,
+        esFestivo: esDiaFestivo
       };
     });
 
     // const horasRegulares = totalHoras - horasExtra;
 
     const valores = {
-      // pagoHorasNormales: salarioHora,
       horasExtra: horasExtra * salarioHora * 1.25, // Recargo único para todas las extras
-      recargoNocturno: recargoNocturno * salarioHora * 0.35
+      recargoNocturno: recargoNocturno * salarioHora * 0.35,
+      recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO // Recargo festivo
     };
 
     const totalPagar = Object.values(valores).reduce((sum, val) => sum + val , 0)* 0.92;
     const costoTotal = Object.values(valores).reduce((sum, val) => sum + val , 0)* 1.3855;
-
-
 
     return {
       id: empleado.id,
@@ -167,6 +162,7 @@ function calcularResumenEmpleados(empleados, turnos) {
       horas: {
         horasExtra: horasExtra.toFixed(2),
         recargoNocturno: recargoNocturno.toFixed(2),
+        horasFestivas: horasFestivas.toFixed(2),
         totalHoras: totalHoras.toFixed(2)
       },
       valores: Object.fromEntries(
@@ -175,10 +171,9 @@ function calcularResumenEmpleados(empleados, turnos) {
       totalPagar: Math.round(totalPagar),
       costoTotal: Math.round(costoTotal),
       totalHoras: totalHoras.toFixed(2),
-      // horasRegulares: horasRegulares.toFixed(2),
       horasExtra: horasExtra.toFixed(2),
-      // pagoRegular: Math.round(valores.pagoHorasNormales),
       pagoExtra: Math.round(valores.horasExtra),
+      pagoFestivo: Math.round(valores.recargoFestivo),
       cantidadTurnos: detalleTurnos.length
     };
   });
@@ -189,9 +184,10 @@ function calcularResumenEmpleados(empleados, turnos) {
       acc.totalNomina += parseFloat(emp.totalPagar);
       acc.totalExtras += parseFloat(emp.horasExtra);
       acc.totalTurnos += emp.cantidadTurnos;
+      acc.totalFestivas = (acc.totalFestivas || 0) + parseFloat(emp.horas.horasFestivas || 0);
       return acc;
     },
-    { totalHoras: 0, totalNomina: 0, totalExtras: 0, totalTurnos: 0 }
+    { totalHoras: 0, totalNomina: 0, totalExtras: 0, totalTurnos: 0, totalFestivas: 0 }
   );
 
   return {
@@ -200,7 +196,8 @@ function calcularResumenEmpleados(empleados, turnos) {
       totalHoras: totales.totalHoras.toFixed(2),
       totalNomina: Math.round(totales.totalNomina),
       totalExtras: totales.totalExtras.toFixed(2),
-      totalTurnos: totales.totalTurnos
+      totalTurnos: totales.totalTurnos,
+      totalFestivas: totales.totalFestivas.toFixed(2)
     },
   };
 }
