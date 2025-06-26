@@ -74,7 +74,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     const turnosEmpleado = turnos.filter((t) => String(t.empleadoId) === String(empleado.id));
     const salarioBase = Number(empleado.salarioBase) || 0;
     const salarioHora = salarioBase / HORAS_MENSUALES_ESTANDAR;
-    const esTrabajadorDireccion = ['Direccion, confianza o manejo', 'Ordinario'].includes(empleado.tipoTrabajador);
+    const esTrabajadorDireccion = ['Direccion, confianza o manejo'].includes(empleado.tipoTrabajador);
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
     let totalHoras = 0;
