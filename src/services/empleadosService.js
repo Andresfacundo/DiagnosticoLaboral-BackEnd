@@ -1,5 +1,5 @@
+const { v4: uuidv4 } = require('uuid');
 let empleados = [];
-let currentId = 1;
 
 function getEmpleados() {
   return empleados;
@@ -7,7 +7,7 @@ function getEmpleados() {
 
 function addEmpleado(data) {
   const empleado = {
-    id: String(currentId++),
+    id: uuidv4(),
     nombre: data.nombre,
     apellido: data.apellido,
     cc: data.cc,
