@@ -94,10 +94,9 @@ function calcularResumenEmpleados(empleados, turnos) {
       const horasSemanales = calcularHorasSemanales(semanasTurnos[claveSemana]);
 
       let horasExtraTurno = 0;
-      if (!esTrabajadorDireccion && horasSemanales > HORAS_SEMANALES_MAXIMAS) {
-        const horasExtraSemanales = horasSemanales - HORAS_SEMANALES_MAXIMAS;
-        const proporcionTurno = tiempoTrabajado / horasSemanales;
-        horasExtraTurno = horasExtraSemanales * proporcionTurno;
+      if (esTrabajadorDireccion ) {
+        horasExtra= 0
+
       }
 
       horasExtra += horasExtraTurno;
