@@ -1,5 +1,6 @@
+const { v4: uuidv4 } = require('uuid');
 let turnos = [];
-let currentId = 1;
+// let currentId = 1;
 
 function getTurnos() {
   return turnos;
@@ -7,7 +8,7 @@ function getTurnos() {
 
 function addTurno(data) {
   const turno = {
-    id: String(currentId++),
+    id: uuidv4(),
     empleadoId: data.empleadoId,
     horaInicio: data.horaInicio,
     horaFin: data.horaFin,
