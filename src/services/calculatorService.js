@@ -3,7 +3,7 @@ const { Constants } = require('../models');
 let memoryConstants = null;
 
 async function loadConstantsFromDB() {
-  await Constants.sync({alter: true})
+  await Constants.sync({ alter: true });
   let constants = await Constants.findOne();
   if (!constants) {
     constants = await Constants.create({});
@@ -47,29 +47,40 @@ const calculateSalaryDetails = ({
   exonerado,
   claseRiesgo,
   auxilioDeTransporte,
-  calcularRetencion = true, 
+  calcularRetencion = true,
   ingresosNoConstitutivos = 0
 }) => {
-  
+  const salarioIntegral = tipoSalario === 'Integral' ? salario * 0.7 : salario;
   const auxilioTransporte = auxilioDeTransporte === "Si" && salario + otrosPagosSalariales <= (memoryConstants.salarioMinimo * 2)
-  ? memoryConstants.auxilioDeTransporte 
-  : 0;
+    ? memoryConstants.auxilioDeTransporte
+    : 0;
   const totalIngresos = salario + auxilioTransporte + otrosPagosSalariales + otrosPagosNoSalariales;
 
   const totalRemuneracion = calculateTotalRemuneracion(tipoSalario, salario, otrosPagosSalariales, otrosPagosNoSalariales);
   const cuarentaPorciento = totalRemuneracion * 0.4;
   const excedente = calculateExcedente(otrosPagosNoSalariales, cuarentaPorciento);
-  const ibc = calculateIBC(tipoSalario, salario, otrosPagosSalariales, excedente);
-  const aportesSena = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.02 : 0) : (exonerado == 'No' ? 0.02 : 0);
-  const aportesIcbf = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.03 : 0) : (exonerado == 'No' ? 0.03 : 0);
-  const tasaSaludEmpleador = exonerado == 'Si' ? (ibc >= memoryConstants.salarioMinimo * 10 ? 0.085 : 0) : (exonerado == 'No' ? 0.085 : 0);
-  const seguridadSocial = calculateSeguridadSocial(ibc, salario, otrosPagosSalariales, pensionado, excedente, tasaSaludEmpleador, aportesSena, aportesIcbf, claseRiesgo);
-  const prestacionesSociales = calculatePrestacionesSociales(tipoSalario, salario, otrosPagosSalariales, auxilioTransporte);
+  const ibcGeneral = calculateIBCGeneral(tipoSalario, salario, otrosPagosSalariales, excedente);
+  const ibcParafiscales = calculateIBCParafiscales(tipoSalario, salario, otrosPagosSalariales);
+  const aportesSena = exonerado == 'Si' ? (ibcParafiscales >= memoryConstants.salarioMinimo * 10 ? 0 : 0) : (exonerado == 'No' ? 0.02 : 0);
+  const aportesIcbf = exonerado == 'Si' ? (ibcParafiscales >= memoryConstants.salarioMinimo * 10 ? 0 : 0) : (exonerado == 'No' ? 0.03 : 0);
+  const tasaSaludEmpleador = exonerado == 'Si' ? (ibcGeneral >= memoryConstants.salarioMinimo * 10 ? 0 : 0) : (exonerado == 'No' ? 0.085 : 0);
 
-  // Calculamos los ingresos no constitutivos de renta (aportes obligatorios del trabajador)
+  const seguridadSocial = calculateSeguridadSocial(
+    ibcGeneral,
+    ibcParafiscales,
+    salario,
+    otrosPagosSalariales,
+    pensionado,
+    excedente,
+    tasaSaludEmpleador,
+    aportesSena,
+    aportesIcbf,
+    claseRiesgo
+  );
+
+  const prestacionesSociales = calculatePrestacionesSociales(tipoSalario, salario, otrosPagosSalariales, auxilioTransporte);
   const ingresosNoConstitutivosCalculados = seguridadSocial.pensionTrabajador + seguridadSocial.FSP + seguridadSocial.saludTrabajador + ingresosNoConstitutivos;
 
-  // Si se solicitó cálculo automático de retención, calculamos la retención en la fuente
   let retencionCalculada = retencionFuente;
   if (calcularRetencion) {
     retencionCalculada = calcularRetencionFuente2025({
@@ -80,6 +91,7 @@ const calculateSalaryDetails = ({
   }
 
   const proyecciones = calculateProyecciones(seguridadSocial, prestacionesSociales, salario, otrosPagosSalariales, otrosPagosNoSalariales, auxilioTransporte, deducciones, retencionCalculada);
+
   return {
     totalRemuneracion,
     cuarentaPorciento,
@@ -90,6 +102,7 @@ const calculateSalaryDetails = ({
       totalIngresos,
       tipoSalario,
       salario,
+      salarioIntegral,
       otrosPagosSalariales,
       otrosPagosNoSalariales,
       pensionado,
@@ -98,14 +111,14 @@ const calculateSalaryDetails = ({
       exonerado,
       claseRiesgo,
       auxilioDeTransporte,
-      ingresosNoConstitutivos: ingresosNoConstitutivosCalculados // Agregamos este valor para referencia
+      ingresosNoConstitutivos: ingresosNoConstitutivosCalculados
     }
   };
 };
 
 function roundValues(obj) {
   return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [key, Math.round(value)])
+    Object.entries(obj).map(([key, value]) => [key, Math.round(value)])
   );
 }
 
@@ -121,11 +134,22 @@ function calculateExcedente(otrosPagosNoSalariales, cuarentaPorciento) {
     : 0;
 }
 
-function calculateIBC(tipoSalario, salario, otrosPagosSalariales, excedente) {
+function calculateIBCGeneral(tipoSalario, salario, otrosPagosSalariales, excedente) {
   if (tipoSalario === 'Ordinario') {
-    return otrosPagosSalariales + salario + excedente;
+    return salario + otrosPagosSalariales + excedente;
   } else if (tipoSalario === 'Integral') {
     return ((salario + otrosPagosSalariales) * 0.7) + excedente;
+  } else if (tipoSalario === 'Medio tiempo') {
+    return memoryConstants.salarioMinimo;
+  }
+  return 0;
+}
+
+function calculateIBCParafiscales(tipoSalario, salario, otrosPagosSalariales) {
+  if (tipoSalario === 'Ordinario') {
+    return salario + otrosPagosSalariales;
+  } else if (tipoSalario === 'Integral') {
+    return (salario + otrosPagosSalariales) * 0.7;
   } else if (tipoSalario === 'Medio tiempo') {
     return memoryConstants.salarioMinimo;
   }
@@ -143,54 +167,49 @@ function calculateFSPPercentage(ibc) {
   return 0;
 }
 
-function calculateSeguridadSocial(ibc, salario, otrosPagosSalariales, pensionado, excedente, tasaSaludEmpleador, aportesSena, aportesIcbf, claseRiesgo) {
-  const porcentajeFSP = calculateFSPPercentage(ibc);
+function calculateSeguridadSocial(ibcGeneral, ibcParafiscales, salario, otrosPagosSalariales, pensionado, excedente, tasaSaludEmpleador, aportesSena, aportesIcbf, claseRiesgo) {
+  const porcentajeFSP = calculateFSPPercentage(ibcGeneral);
   const riesgoLaboralPorcentaje = getRiesgoLaboralPorcentaje(claseRiesgo);
 
   const seguridadSocial = roundValues({
-    saludTrabajador: ibc * 0.04,
+    saludTrabajador: ibcGeneral * 0.04,
     excedente,
-    ibc,
-    saludEmpleador: ibc * tasaSaludEmpleador,
-    pensionTrabajador: pensionado === 'No' ? ibc * 0.04 : 0,
-    pensionEmpleador: pensionado === 'No' ? ibc * 0.12 : 0,
-    FSP: pensionado === 'No' ? ibc * porcentajeFSP : 0,
-    riesgosLaborales: Math.ceil(ibc * riesgoLaboralPorcentaje),
-    sena: (ibc * aportesSena),
-    icbf: (ibc * aportesIcbf),
-    cajaCompensacion: ibc * 0.04
+    ibcGeneral,
+    ibcParafiscales,
+    saludEmpleador: ibcGeneral * tasaSaludEmpleador,
+    pensionTrabajador: pensionado === 'No' ? ibcGeneral * 0.04 : 0,
+    pensionEmpleador: pensionado === 'No' ? ibcGeneral * 0.12 : 0,
+    FSP: pensionado === 'No' ? ibcGeneral * porcentajeFSP : 0,
+    riesgosLaborales: Math.ceil(ibcGeneral * riesgoLaboralPorcentaje),
+    sena: ibcParafiscales * aportesSena,
+    icbf: ibcParafiscales * aportesIcbf,
+    cajaCompensacion: ibcParafiscales * 0.04
   });
 
   seguridadSocial.totalEmpleador =
-  seguridadSocial.saludEmpleador +
-  seguridadSocial.cajaCompensacion +
-  seguridadSocial.pensionEmpleador +
-  seguridadSocial.sena +
-  seguridadSocial.icbf +
-  seguridadSocial.riesgosLaborales;
-  
+    seguridadSocial.saludEmpleador +
+    seguridadSocial.cajaCompensacion +
+    seguridadSocial.pensionEmpleador +
+    seguridadSocial.sena +
+    seguridadSocial.icbf +
+    seguridadSocial.riesgosLaborales;
+
   seguridadSocial.totalTrabajador =
-  seguridadSocial.FSP +
-  seguridadSocial.saludTrabajador +
-  seguridadSocial.pensionTrabajador;
+    seguridadSocial.FSP +
+    seguridadSocial.saludTrabajador +
+    seguridadSocial.pensionTrabajador;
 
   return seguridadSocial;
 }
 
 function getRiesgoLaboralPorcentaje(claseRiesgo) {
   switch (claseRiesgo) {
-    case '1':
-      return 0.00522;
-    case '2':
-      return 0.01044;
-    case '3':
-      return 0.02436; 
-    case '4':
-      return 0.04350;
-    case '5':
-      return 0.06960;    
-    default:
-      return 0.00522;
+    case '1': return 0.00522;
+    case '2': return 0.01044;
+    case '3': return 0.02436;
+    case '4': return 0.04350;
+    case '5': return 0.06960;
+    default: return 0.00522;
   }
 }
 
@@ -202,8 +221,8 @@ function calculatePrestacionesSociales(tipoSalario, salario, otrosPagosSalariale
       interesesCesantias: 0,
       vacaciones: (salario + otrosPagosSalariales) * 0.0417
     });
-  };
-  
+  }
+
   const basePrestacional = salario + otrosPagosSalariales + auxilioTransporte;
   const cesantias = basePrestacional * 0.0833;
 
@@ -232,18 +251,18 @@ function calculateProyecciones(seguridadSocial, prestacionesSociales, salario, o
     seguridadSocial.cajaCompensacion
   );
 
-  const aportesTrabajador = 
+  const aportesTrabajador =
     seguridadSocial.saludTrabajador +
     seguridadSocial.pensionTrabajador +
     seguridadSocial.FSP;
 
-  const pagoNetoTrabajador = 
+  const pagoNetoTrabajador =
     salario +
     otrosPagosSalariales +
     otrosPagosNoSalariales +
-    auxilioTransporte - 
-    aportesTrabajador - 
-    retencionFuente - 
+    auxilioTransporte -
+    aportesTrabajador -
+    retencionFuente -
     deducciones;
 
   const costoTotalEmpleador =
@@ -255,7 +274,7 @@ function calculateProyecciones(seguridadSocial, prestacionesSociales, salario, o
     aportesEmpleador;
 
   const totalPagar = costoTotalEmpleador - provisionesPrestacionesSociales;
-  
+
   return {
     provisionesPrestacionesSociales,
     aportesEmpleador,
@@ -269,48 +288,27 @@ function calculateProyecciones(seguridadSocial, prestacionesSociales, salario, o
   };
 }
 
-function calcularRetencionFuente2025({totalPagos, ingresosNoConstitutivos, deducciones}) {
-  // Valor UVT para 2025
+function calcularRetencionFuente2025({ totalPagos, ingresosNoConstitutivos, deducciones }) {
   const UVT = memoryConstants.UVT;
-
-  // Subtotal 
   const subtotal = totalPagos - ingresosNoConstitutivos - deducciones;
-
-  // Renta exenta del 25% con tope de 790 UVT (anual)
-  const rentaExenta25 = Math.min(subtotal * 0.25, (UVT * 790) / 1);
-  
-  // Base gravable
+  const rentaExenta25 = Math.min(subtotal * 0.25, UVT * 790);
   const baseGravable = subtotal - rentaExenta25;
-  
-  // Si no hay base gravable no hay retefuente
+
   if (baseGravable <= 0) return 0;
 
-  // Convertir base gravable a UVT
-  const baseUVT = baseGravable / UVT;    
-  
+  const baseUVT = baseGravable / UVT;
   let retencionUVT = 0;
-  
-  if (baseUVT <= 95) {
-    retencionUVT = 0;
-  } else if (baseUVT <= 150) {
-    retencionUVT = (baseUVT - 95) * 0.19;
-  } else if (baseUVT <= 360) {
-    retencionUVT = ((baseUVT - 150) * 0.28) + 10;
-  } else if (baseUVT <= 640) {
-    retencionUVT = ((baseUVT - 360) * 0.33) + 69;
-  } else if (baseUVT <= 945) {
-    retencionUVT = ((baseUVT - 640) * 0.35) + 162;
-  } else if (baseUVT <= 2300) {
-    retencionUVT = ((baseUVT - 945) * 0.37) + 268;
-  } else {
-    retencionUVT = ((baseUVT - 2300) * 0.39) + 770;
-  }    
 
-  // Calcular en pesos y redondear al múltiplo de 1000 más cercano
+  if (baseUVT <= 95) retencionUVT = 0;
+  else if (baseUVT <= 150) retencionUVT = (baseUVT - 95) * 0.19;
+  else if (baseUVT <= 360) retencionUVT = ((baseUVT - 150) * 0.28) + 10;
+  else if (baseUVT <= 640) retencionUVT = ((baseUVT - 360) * 0.33) + 69;
+  else if (baseUVT <= 945) retencionUVT = ((baseUVT - 640) * 0.35) + 162;
+  else if (baseUVT <= 2300) retencionUVT = ((baseUVT - 945) * 0.37) + 268;
+  else retencionUVT = ((baseUVT - 2300) * 0.39) + 770;
+
   const retencionPesos = retencionUVT * UVT;
-  const retencionRedondeada = Math.round(retencionPesos / 1000) * 1000;
-
-  return retencionRedondeada;
+  return Math.round(retencionPesos / 1000) * 1000;
 }
 
 module.exports = {
