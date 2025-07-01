@@ -7,7 +7,7 @@ const HORAS_MENSUALES_ESTANDAR = 230;
 const HORA_NOCTURNA_INICIO = 21;
 const HORA_NOCTURNA_FIN = 6;
 const HORAS_SEMANALES_MAXIMAS = 46;
-const RECARGO_FESTIVO = 0.75; // 75% sobre la hora ordinaria
+const RECARGO_FESTIVO = 0.80; 
 
 function esFestivo(fecha) {
   return colombianHolidays.isHoliday(fecha);
@@ -68,7 +68,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     const turnosEmpleado = turnos.filter((t) => String(t.empleadoId) === String(empleado.id));
     const salarioBase = Number(empleado.salarioBase) || 0;
     const salarioHora = salarioBase / HORAS_MENSUALES_ESTANDAR;
-    const esTrabajadorDireccion = ['Direccion, confianza o manejo'].includes(empleado.tipoTrabajador);
+    const esTrabajadorDireccion = empleado.clasificacionPersonal === 'Direccion, confianza o manejo';
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
     let totalHoras = 0;
