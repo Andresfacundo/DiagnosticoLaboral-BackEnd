@@ -13,10 +13,25 @@ function addEmpleado(data) {
     cc: data.cc,
     clasificacionPersonal: data.clasificacionPersonal,
     area: data.area,
-    salarioBase: parseFloat(data.salarioBase) // Ahora se guarda el salario base mensual
+    salarioBase: parseFloat(data.salarioBase) 
   };
   empleados.push(empleado);
   return empleado;
 }
 
-module.exports = { getEmpleados, addEmpleado };
+function addEmpleadosMasivos(lista) {
+  const empleadosAgregados = lista.map(data => ({
+    id: uuidv4(),
+    nombre: data.nombre,
+    apellido: data.apellido,
+    cc: data.cc,
+    clasificacionPersonal: data.clasificacionPersonal,
+    area: data.area,
+    salarioBase: parseFloat(data.salarioBase)
+  }));
+
+  empleados.push(...empleadosAgregados);
+  return empleadosAgregados;
+}
+
+module.exports = { getEmpleados, addEmpleado, addEmpleadosMasivos };

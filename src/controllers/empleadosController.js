@@ -9,4 +9,16 @@ const agregarEmpleado = (req, res) => {
   res.status(201).json(nuevoEmpleado);
 };
 
-module.exports = { obtenerEmpleados, agregarEmpleado };
+const agregarEmpleadosMasivos = (req, res) => {
+  const lista = req.body;
+  if(!Array.isArray(lista)){
+    return res.status(400).json({ error: 'Se esperaba un array de empleados'});
+
+  }
+
+  const nuevosEmpleados = empleadosService.addEmpleadosMasivos(lista);
+  res.status(201).json(nuevosEmpleados);
+};
+
+
+module.exports = { obtenerEmpleados, agregarEmpleado, agregarEmpleadosMasivos };
