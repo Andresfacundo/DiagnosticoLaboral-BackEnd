@@ -1,4 +1,3 @@
-// backend/calculoResumen.js
 const empleadosService = require("./empleadosService");
 const turnosService = require("./turnosService");
 const colombianHolidays = require('colombian-holidays');
@@ -7,7 +6,7 @@ const HORAS_MENSUALES_ESTANDAR = 230;
 const HORA_NOCTURNA_INICIO = 21;
 const HORA_NOCTURNA_FIN = 6;
 const HORAS_SEMANALES_MAXIMAS = 46;
-const RECARGO_FESTIVO = 0.80; 
+const RECARGO_FESTIVO = 0.80;
 
 function esFestivo(fecha) {
   return colombianHolidays.isHoliday(fecha);
@@ -40,7 +39,7 @@ function calcularHorasNocturnas(horaInicio, horaFin, minutosDescanso = 0) {
 function agruparTurnosPorSemana(turnos) {
   const semanas = {};
   turnos.forEach(turno => {
-    const fecha = new Date(`${turno.dia}T00:00:00`);
+    const fecha = new Date(`${turno.diaInicio}T00:00:00`);
     const inicioSemana = new Date(fecha);
     inicioSemana.setDate(fecha.getDate() - fecha.getDay());
     const claveSemana = inicioSemana.toISOString().split('T')[0];
@@ -86,7 +85,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     }
 
     const detalleTurnos = turnosEmpleado.map((turno) => {
-      const fecha = new Date(`${turno.dia}T00:00:00`);
+      const fechaInicio = new Date(`${turno.diaInicio}T00:00:00`);
       const [hiH, hiM] = turno.horaInicio.split(":").map(Number);
       const [hfH, hfM] = turno.horaFin.split(":").map(Number);
       const horaInicio = hiH + hiM / 60;
@@ -97,7 +96,6 @@ function calcularResumenEmpleados(empleados, turnos) {
 
       totalHoras += tiempoTrabajado;
 
-      // Calcular recargo nocturno
       let recargoNocturnoTurno = 0;
       let inicioMin = horaInicio * 60;
       let finMin = horaFin * 60;
@@ -108,35 +106,35 @@ function calcularResumenEmpleados(empleados, turnos) {
       }
       recargoNocturno += recargoNocturnoTurno / 60;
 
-      // Calcular si es festivo
-      const esDiaFestivo = esFestivo(fecha);
+      const esDiaFestivo = esFestivo(fechaInicio);
       if (esDiaFestivo) horasFestivas += tiempoTrabajado;
 
       return {
         empleado: `${empleado.nombre} ${empleado.apellido}`,
         cc: empleado.cc,
         area: empleado.area,
-        dia: turno.dia,
+        diaInicio: turno.diaInicio,
+        diaFin: turno.diaFin,
         horaInicio: turno.horaInicio,
         horaFin: turno.horaFin,
         minutosDescanso: turno.minutosDescanso,
         tiempoTrabajado: tiempoTrabajado.toFixed(2),
         horasNocturnas: horasNocturnas.toFixed(2),
         horasDiurnas: horasDiurnas.toFixed(2),
-        horasExtra: "0.00", // ya no se calcula por turno
+        horasExtra: "0.00",
         esTrabajadorDireccion,
         esFestivo: esDiaFestivo
       };
     });
 
     const valores = {
-      horasExtra: horasExtra * salarioHora * 1.25, // Recargo único para todas las extras
+      horasExtra: horasExtra * salarioHora * 1.25,
       recargoNocturno: recargoNocturno * salarioHora * 0.35,
-      recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO // Recargo festivo
+      recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
 
-    const totalPagar = Object.values(valores).reduce((sum, val) => sum + val , 0)* 0.92;
-    const costoTotal = Object.values(valores).reduce((sum, val) => sum + val , 0)* 1.3855;
+    const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
+    const costoTotal = Object.values(valores).reduce((sum, val) => sum + val, 0) * 1.3855;
 
     return {
       id: empleado.id,

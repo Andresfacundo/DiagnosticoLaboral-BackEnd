@@ -12,7 +12,8 @@ function addTurno(data) {
     empleadoId: data.empleadoId,
     horaInicio: data.horaInicio,
     horaFin: data.horaFin,
-    dia: data.dia,
+    diaInicio: data.dia,
+    diaFin: data.diaFin,
     minutosDescanso: parseInt(data.minutosDescanso)
   };
   turnos.push(turno);
