@@ -135,19 +135,19 @@ function calculateExcedente(otrosPagosNoSalariales, cuarentaPorciento) {
 }
 
 function calculateIBCGeneral(tipoSalario, salario, otrosPagosSalariales, excedente) {
-  if (tipoSalario === 'Ordinario') {
-    return salario + otrosPagosSalariales + excedente;
+  if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales + excedente < memoryConstants.salarioMinimo) {
+    return memoryConstants.salarioMinimo || salario + otrosPagosSalariales + excedente;
   } else if (tipoSalario === 'Integral') {
     return ((salario + otrosPagosSalariales) * 0.7) + excedente;
-  } else if (tipoSalario === 'Medio tiempo') {
+  } else {
     return memoryConstants.salarioMinimo;
   }
   return 0;
 }
 
 function calculateIBCParafiscales(tipoSalario, salario, otrosPagosSalariales) {
-  if (tipoSalario === 'Ordinario') {
-    return salario + otrosPagosSalariales;
+  if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales  < memoryConstants.salarioMinimo) {
+    return memoryConstants.salarioMinimo || salario + otrosPagosSalariales;
   } else if (tipoSalario === 'Integral') {
     return (salario + otrosPagosSalariales) * 0.7;
   } else if (tipoSalario === 'Medio tiempo') {
