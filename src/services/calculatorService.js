@@ -134,26 +134,60 @@ function calculateExcedente(otrosPagosNoSalariales, cuarentaPorciento) {
     : 0;
 }
 
+// function calculateIBCGeneral(tipoSalario, salario, otrosPagosSalariales, excedente) {
+//   if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales + excedente < memoryConstants.salarioMinimo) {
+//     return memoryConstants.salarioMinimo && salario + otrosPagosSalariales + excedente;
+//   } else if (tipoSalario === 'Integral') {
+//     return ((salario + otrosPagosSalariales) * 0.7) + excedente;
+//   } else {
+//     return memoryConstants.salarioMinimo;
+//   }
+
+// }
 function calculateIBCGeneral(tipoSalario, salario, otrosPagosSalariales, excedente) {
-  if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales + excedente < memoryConstants.salarioMinimo) {
-    return memoryConstants.salarioMinimo || salario + otrosPagosSalariales + excedente;
+  const total = salario + otrosPagosSalariales + excedente;
+
+  if (tipoSalario === 'Ordinario') {
+    return total < memoryConstants.salarioMinimo ? memoryConstants.salarioMinimo : total;
   } else if (tipoSalario === 'Integral') {
     return ((salario + otrosPagosSalariales) * 0.7) + excedente;
-  } else {
-    return memoryConstants.salarioMinimo;
+  } else if (tipoSalario === 'Medio tiempo') {
+    return memoryConstants.salarioMinimo; // O proporcional si manejas eso
   }
-  return 0;
+
+  // Fallback
+  return memoryConstants.salarioMinimo;
 }
 
+
+// function calculateIBCParafiscales(tipoSalario, salario, otrosPagosSalariales) {
+//   if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales  < memoryConstants.salarioMinimo) {
+//     return memoryConstants.salarioMinimo || salario + otrosPagosSalariales;
+//   } else if (tipoSalario === 'Integral') {
+//     return (salario + otrosPagosSalariales) * 0.7;
+//   } else if (tipoSalario === 'Medio tiempo') {
+//     return memoryConstants.salarioMinimo;
+//   }
+//   return 0;
+// }
+
 function calculateIBCParafiscales(tipoSalario, salario, otrosPagosSalariales) {
-  if (tipoSalario === 'Ordinario' && salario + otrosPagosSalariales  < memoryConstants.salarioMinimo) {
-    return memoryConstants.salarioMinimo || salario + otrosPagosSalariales;
-  } else if (tipoSalario === 'Integral') {
-    return (salario + otrosPagosSalariales) * 0.7;
-  } else if (tipoSalario === 'Medio tiempo') {
-    return memoryConstants.salarioMinimo;
+  const total = salario + otrosPagosSalariales;
+
+  if (tipoSalario === 'Ordinario') {
+    return total < memoryConstants.salarioMinimo ? memoryConstants.salarioMinimo : total;
   }
-  return 0;
+  if (tipoSalario === 'Integral') {
+    const ibc = total * 0.7;
+    // Según norma, no se pagan parafiscales si salario integral < 10 SMLMV
+    return (salario >= memoryConstants.salarioMinimo * 10) ? ibc : 0;
+  }
+
+  if (tipoSalario === 'Medio tiempo') {
+    return memoryConstants.salarioMinimo; // Ajustable si haces cálculo proporcional
+  }
+
+  return 0; // Fallback para tipos no válidos
 }
 
 function calculateFSPPercentage(ibc) {
