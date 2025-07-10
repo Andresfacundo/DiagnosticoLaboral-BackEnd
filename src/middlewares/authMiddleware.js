@@ -52,7 +52,7 @@ const esAdmin = (req, res, next) => {
     });
   }
   
-  if (req.usuario.rol !== 'admin' && req.usuario.rol !== 'asociado') {
+  if (req.usuario.rol !== 'admin') {
     return res.status(403).json({
       msg:'No tienes permisos para esta acción'
     });
@@ -68,14 +68,29 @@ const asociado = (req, res, next) => {
     });
   }
   
-  if (req.usuario.rol !== 'asociado' && req.usuario.rol !== 'admin') {
+  if (req.usuario.rol !== 'asociado') {
     return res.status(403).json({
-      msg: 'No tienes permisos de administrador'
+      msg: 'No tienes permisos  para esta accion'
     });
   }
   
   next();
 };
+
+const permitirRoles = (...rolesPermitidos) => {
+  return (req, res, next) => {
+    if (!req.usuario) {
+      return res.status(500).json({ msg: 'No se ha validado el token.' });
+    }
+
+    if (!rolesPermitidos.includes(req.usuario.rol)) {
+      return res.status(403).json({ msg: 'No tienes permisos para esta acción' });
+    }
+
+    next();
+  };
+};
+
 
 
 
@@ -83,4 +98,5 @@ module.exports = {
   verificarAuth,
   asociado,
   esAdmin,
+  permitirRoles,
 };

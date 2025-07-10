@@ -6,10 +6,11 @@ const {
     getDiagnosticoById,    
     eliminarDiagnostico
 } = require("../controllers/diagnosticoControllers");
+const { verificarAuth, esAdmin } = require("../middlewares/authMiddleware");
 
 router.post("/:empleadorId", procesarDiagnostico);
 router.get("/", getDiagnosticos);
 router.get("/:id", getDiagnosticoById);
-router.delete("/:id", eliminarDiagnostico);
+router.delete("/:id", verificarAuth, esAdmin, eliminarDiagnostico);
 
 module.exports = router;
