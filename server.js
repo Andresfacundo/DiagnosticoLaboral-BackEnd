@@ -9,7 +9,7 @@ const intereses = require('./src/routes/interesesRoutes.js')
 const calculatorRoutes = require("./src/routes/calculatorRoutes");
 const categorias = require("./src/routes/categoriasRoutes.js")
 const sendEmail = require('./src/routes/sendEmailRoutes.js');
-
+const trabajadoresExcel = require('./src/routes/trabajadoresRoutes.js');
 const empleadosRoutes = require('./src/routes/empleadosRoutes.js');
 const turnosRoutes = require('./src/routes/turnosRoutes');
 const resumenRoutes = require('./src/routes/resumenRoutes');
@@ -42,6 +42,7 @@ app.use('/api/send-email', sendEmail);
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/turnos', turnosRoutes);
 app.use('/api/resumen', resumenRoutes);
+app.use('/api/trabajadores', trabajadoresExcel);
 
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'Server is running' });
