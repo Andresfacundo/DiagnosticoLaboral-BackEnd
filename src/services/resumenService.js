@@ -41,7 +41,9 @@ function agruparTurnosPorSemana(turnos) {
   turnos.forEach(turno => {
     const fecha = new Date(`${turno.diaInicio}T00:00:00`);
     const inicioSemana = new Date(fecha);
-    inicioSemana.setDate(fecha.getDate() - fecha.getDay());
+    const dia = fecha.getDay(); 
+    const offset = dia === 0 ? -6 : 1 - dia;
+    inicioSemana.setDate(fecha.getDate() + offset);
     const claveSemana = inicioSemana.toISOString().split('T')[0];
     if (!semanas[claveSemana]) semanas[claveSemana] = [];
     semanas[claveSemana].push(turno);
