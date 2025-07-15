@@ -9,7 +9,8 @@ const Categoria = require('./Categoria');
 const Recomendacion = require('./Recomendacion');
 const Diagnostico = require('./Diagnostico');
 // const TokenBlacklist = require("./TokenBlackList");
-const Trabajador = require('./Trabajadores.js'); // Asegúrate de que la ruta sea correcta
+const Trabajador = require('./Trabajadores'); 
+const Empleadores = require('./Empleadores.js'); // Asegúrate de que la ruta sea correcta
 
 
 const syncDatabase = async () => {
@@ -36,5 +37,6 @@ module.exports = {
   Recomendacion,
   // TokenBlacklist,
   Trabajador,
+  Empleadores,
   syncDatabase
 };
