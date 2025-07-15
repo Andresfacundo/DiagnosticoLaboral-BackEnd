@@ -2,7 +2,7 @@ const empleadosService = require("./empleadosService");
 const turnosService = require("./turnosService");
 const colombianHolidays = require('colombian-holidays');
 
-const HORAS_MENSUALES_ESTANDAR = 230;
+const HORAS_MENSUALES_ESTANDAR = 220;
 const HORA_NOCTURNA_INICIO = 21;
 const HORA_NOCTURNA_FIN = 6;
 const HORAS_SEMANALES_MAXIMAS = 44;
