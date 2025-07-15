@@ -1,4 +1,5 @@
-const Trabajadores = require('../models/Trabajadores');
+const Trabajadores = require('../models/Trabajadores.js');
+
 const { parseFechaExcel, calcularEdad, calcularAntiguedad } = require('../utils/fechasUtils.js');
 
 const procesarFilaTrabajador = async (row) => {
