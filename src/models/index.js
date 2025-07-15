@@ -9,7 +9,7 @@ const Categoria = require('./Categoria');
 const Recomendacion = require('./Recomendacion');
 const Diagnostico = require('./Diagnostico');
 // const TokenBlacklist = require("./TokenBlackList");
-const Trabajador = require('./Trabajadores'); 
+// const Trabajador = require('./Trabajadores'); 
 // const Empleadores = require('./Empleadores.js');
 
 
@@ -36,7 +36,7 @@ module.exports = {
   Categoria,
   Recomendacion,
   // TokenBlacklist,
-  Trabajador,
+  // Trabajador,
   // Empleadores,
   syncDatabase
 };
