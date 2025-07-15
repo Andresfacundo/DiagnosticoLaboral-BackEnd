@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../db.js');
+const Empleador = require('./Empleadores.js');
 
 const Trabajadores = sequelize.define('Trabajadores', {
     nombre: { type: DataTypes.STRING, },
@@ -53,5 +54,10 @@ const Trabajadores = sequelize.define('Trabajadores', {
     tableName: 'Trabajadores',
     timestamps: false
 });
+
+// Trabajadores.belongsTo(Empleador, {
+//   foreignKey: 'empleadorId',
+//   as: 'empleador'
+// });
 
 module.exports = Trabajadores;
