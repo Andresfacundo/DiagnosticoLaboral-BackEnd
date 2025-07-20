@@ -41,7 +41,7 @@ function agruparTurnosPorSemana(turnos) {
   turnos.forEach(turno => {
     const fecha = new Date(`${turno.diaInicio}T00:00:00`);
     const inicioSemana = new Date(fecha);
-    const dia = fecha.getDay(); 
+    const dia = fecha.getDay();
     const offset = dia === 0 ? -6 : 1 - dia;
     inicioSemana.setDate(fecha.getDate() + offset);
     const claveSemana = inicioSemana.toISOString().split('T')[0];
@@ -73,18 +73,48 @@ function calcularResumenEmpleados(empleados, turnos) {
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
     let totalHoras = 0;
-    let horasExtra = 0;
+    let horasExtraTotales = 0;
+    let horasExtraDiurnas = 0;
+    let horasExtraNocturnas = 0;
+    let horasExtra = horasExtraDiurnas + horasExtraNocturnas;
+
     let recargoNocturno = 0;
     let horasFestivas = 0;
 
+
     if (!esTrabajadorDireccion) {
       for (const claveSemana in semanasTurnos) {
-        const horasSemana = calcularHorasSemanales(semanasTurnos[claveSemana]);
-        if (horasSemana > HORAS_SEMANALES_MAXIMAS) {
-          horasExtra += (horasSemana - HORAS_SEMANALES_MAXIMAS);
+        let horasAcumuladas = 0;
+        const turnosSemana = semanasTurnos[claveSemana];
+
+        for (const turno of turnosSemana) {
+          const [hiH, hiM] = turno.horaInicio.split(":").map(Number);
+          const [hfH, hfM] = turno.horaFin.split(":").map(Number);
+          const horaInicio = hiH + hiM / 60;
+          const horaFin = hfH + hfM / 60;
+          const minutosDescanso = Number(turno.minutosDescanso) || 0;
+
+          const { horasNocturnas, horasDiurnas, tiempoTrabajado } = calcularHorasNocturnas(horaInicio, horaFin, minutosDescanso);
+
+          const espacioDisponible = Math.max(0, HORAS_SEMANALES_MAXIMAS - horasAcumuladas);
+          const horasAsignadas = Math.min(tiempoTrabajado, espacioDisponible);
+          const horasExcedentes = Math.max(0, tiempoTrabajado - espacioDisponible);
+
+          horasAcumuladas += horasAsignadas;
+
+          if (horasExcedentes > 0) {
+            const proporcionNocturna = horasNocturnas / (horasNocturnas + horasDiurnas || 1);
+            const extraNocturna = horasExcedentes * proporcionNocturna;
+            const extraDiurna = horasExcedentes - extraNocturna;
+
+            horasExtraNocturnas += extraNocturna;
+            horasExtraDiurnas += extraDiurna;
+            horasExtraTotales += horasExcedentes;
+          }
         }
       }
     }
+
 
     const detalleTurnos = turnosEmpleado.map((turno) => {
       const fechaInicio = new Date(`${turno.diaInicio}T00:00:00`);
@@ -130,9 +160,10 @@ function calcularResumenEmpleados(empleados, turnos) {
     });
 
     const valores = {
-      horasExtra: horasExtra * salarioHora * 1.25,
+      horasExtraDiurnas: horasExtraDiurnas * salarioHora * 1.25,
+      horasExtraNocturnas: horasExtraNocturnas * salarioHora * 1.75,
       recargoNocturno: recargoNocturno * salarioHora * 0.35,
-      recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
+      recargoFestivo: horasFestivas * salarioHora * 0.80
     };
 
     const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
@@ -150,10 +181,13 @@ function calcularResumenEmpleados(empleados, turnos) {
       salarioHora: salarioHora.toFixed(2),
       detalleTurnos,
       horas: {
-        horasExtra: horasExtra.toFixed(2),
+        horasExtraTotales: horasExtraTotales.toFixed(2),
+        horasExtraDiurnas: horasExtraDiurnas.toFixed(2),
+        horasExtraNocturnas: horasExtraNocturnas.toFixed(2),
         recargoNocturno: recargoNocturno.toFixed(2),
         horasFestivas: horasFestivas.toFixed(2),
         totalHoras: totalHoras.toFixed(2)
+
       },
       valores: Object.fromEntries(
         Object.entries(valores).map(([k, v]) => [k, Math.max(0, Math.round(v))])
@@ -162,7 +196,7 @@ function calcularResumenEmpleados(empleados, turnos) {
       costoTotal: Math.round(costoTotal),
       totalHoras: totalHoras.toFixed(2),
       horasExtra: horasExtra.toFixed(2),
-      pagoExtra: Math.round(valores.horasExtra),
+      pagoExtra: Math.round(valores.horasExtraDiurnas + valores.horasExtraNocturnas),
       pagoFestivo: Math.round(valores.recargoFestivo),
       cantidadTurnos: detalleTurnos.length
     };
