@@ -13,7 +13,8 @@ function addEmpleado(data) {
     cc: data.cc,
     clasificacionPersonal: data.clasificacionPersonal,
     area: data.area,
-    salarioBase: parseFloat(data.salarioBase) 
+    salarioBase: parseFloat(data.salarioBase),
+    color: data.color
   };
   empleados.push(empleado);
   return empleado;
