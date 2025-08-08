@@ -107,14 +107,17 @@ function calcularResumenEmpleados(empleados, turnos) {
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
     let totalHoras = 0;
-    let horasExtraDiurnas = 0;
-    let horasExtraNocturnas = 0;
+    let totalHorasExtraDiurnas = 0;
+    let totalHorasExtraNocturnas = 0;
+    let totalOtrasHorasExtras = 0;
     let recargoNocturno = 0;
     let horasFestivas = 0;
 
     if (!esTrabajadorDireccion) {
       for (const claveSemana in semanasTurnos) {
         let horasAcumuladas = 0;
+        let horasExtraDiurnasSemana = 0;
+        let horasExtraNocturnasSemana = 0;
         const turnosSemana = semanasTurnos[claveSemana];
 
         for (const turno of turnosSemana) {
@@ -142,25 +145,32 @@ function calcularResumenEmpleados(empleados, turnos) {
               horaInicio, horaFin, minutosDescanso, minutosHastaExtra
             );
 
-            horasExtraNocturnas += extrasNocturnas;
-            horasExtraDiurnas += extrasDiurnas;
+            horasExtraNocturnasSemana += extrasNocturnas;
+            horasExtraDiurnasSemana += extrasDiurnas;
           }
         }
+
+        const horasExtraTotalesSemana = horasExtraDiurnasSemana + horasExtraNocturnasSemana;
+        let otrasHorasExtrasSemana = 0;
+        let horasExtraDiurnasPermitidasSemana = horasExtraDiurnasSemana;
+        let horasExtraNocturnasPermitidasSemana = horasExtraNocturnasSemana;
+
+        if (horasExtraTotalesSemana > MAX_HORAS_EXTRA_SEMANA) {
+          const exceso = horasExtraTotalesSemana - MAX_HORAS_EXTRA_SEMANA;
+          otrasHorasExtrasSemana = exceso;
+
+          if (horasExtraTotalesSemana > 0) {
+            const factor = horasExtraDiurnasSemana / horasExtraTotalesSemana;
+            horasExtraDiurnasPermitidasSemana = horasExtraDiurnasSemana - (exceso * factor);
+            horasExtraNocturnasPermitidasSemana = horasExtraNocturnasSemana - (exceso * (1 - factor));
+          }
+        }
+
+        // Acumulamos los totales de todas las semanas
+        totalHorasExtraDiurnas += horasExtraDiurnasPermitidasSemana;
+        totalHorasExtraNocturnas += horasExtraNocturnasPermitidasSemana;
+        totalOtrasHorasExtras += otrasHorasExtrasSemana;
       }
-    }
-
-    const horasExtraTotales = horasExtraDiurnas + horasExtraNocturnas;
-    let otrasHorasExtras = 0;
-    let horasExtraDiurnasPermitidas = horasExtraDiurnas;
-    let horasExtraNocturnasPermitidas = horasExtraNocturnas;
-
-    if (horasExtraTotales > MAX_HORAS_EXTRA_SEMANA) {
-      const exceso = horasExtraTotales - MAX_HORAS_EXTRA_SEMANA;
-      otrasHorasExtras = exceso;
-
-      const factor = horasExtraDiurnas / horasExtraTotales;
-      horasExtraDiurnasPermitidas = horasExtraDiurnas - (exceso * factor);
-      horasExtraNocturnasPermitidas = horasExtraNocturnas - (exceso * (1 - factor));
     }
 
     const detalleTurnos = turnosEmpleado.map((turno) => {
@@ -218,18 +228,21 @@ function calcularResumenEmpleados(empleados, turnos) {
       };
     });
 
-    const horasNocturnasSinExtras = Math.max(0, recargoNocturno - horasExtraNocturnas);
+    const horasNocturnasSinExtras = Math.max(0, recargoNocturno - totalHorasExtraNocturnas);
 
+    // CAMBIO PRINCIPAL: Usamos las variables totales ya calculadas semana por semana
     const valores = {
-      horasExtraDiurnas: horasExtraDiurnasPermitidas * salarioHora * 1.25,
-      horasExtraNocturnas: horasExtraNocturnasPermitidas * salarioHora * 1.75,
-      otrasHorasExtras: otrasHorasExtras * salarioHora * 2.0,
+      horasExtraDiurnas: totalHorasExtraDiurnas * salarioHora * 1.25,
+      horasExtraNocturnas: totalHorasExtraNocturnas * salarioHora * 1.75,
+      otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 2.0,
       recargoNocturno: horasNocturnasSinExtras * salarioHora * 0.35,
       recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
 
     const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
     const costoTotal = Object.values(valores).reduce((sum, val) => sum + val, 0) * 1.3855;
+
+    const horasExtraTotales = totalHorasExtraDiurnas + totalHorasExtraNocturnas;
 
     return {
       id: empleado.id,
@@ -244,9 +257,9 @@ function calcularResumenEmpleados(empleados, turnos) {
       detalleTurnos,
       horas: {
         horasExtraTotales: horasExtraTotales.toFixed(2),
-        horasExtraDiurnas: horasExtraDiurnasPermitidas.toFixed(2),
-        horasExtraNocturnas: horasExtraNocturnasPermitidas.toFixed(2),
-        otrasHorasExtras: otrasHorasExtras.toFixed(2),
+        horasExtraDiurnas: totalHorasExtraDiurnas.toFixed(2),
+        horasExtraNocturnas: totalHorasExtraNocturnas.toFixed(2),
+        otrasHorasExtras: totalOtrasHorasExtras.toFixed(2),
         recargoNocturno: horasNocturnasSinExtras.toFixed(2),
         horasFestivas: horasFestivas.toFixed(2),
         totalHoras: totalHoras.toFixed(2)
