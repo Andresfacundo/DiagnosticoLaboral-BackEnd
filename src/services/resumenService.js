@@ -102,8 +102,7 @@ function calcularResumenEmpleados(empleados, turnos) {
   const resumenEmpleados = empleados.map((empleado) => {
     const turnosEmpleado = turnos.filter((t) => String(t.empleadoId) === String(empleado.id));
     const salarioBase = Number(empleado.salarioBase) || 0;
-    const salarioHora = salarioBase / HORAS_MENSUALES_ESTANDAR;
-    console.log('salario hora',salarioHora)
+    const salarioHora = salarioBase / HORAS_MENSUALES_ESTANDAR;    
     const esTrabajadorDireccion = empleado.clasificacionPersonal === 'Direccion, confianza o manejo';
     const semanasTurnos = agruparTurnosPorSemana(turnosEmpleado);
 
@@ -202,18 +201,16 @@ function calcularResumenEmpleados(empleados, turnos) {
         totalHorasExtraNocturnas += horasExtraNocturnasPermitidasSemana;
         totalOtrasHorasExtras += otrasHorasExtrasSemana;
         totalRecargoNocturno += recargoNocturnoSemana;
-        console.log('recargoNocturno',totalRecargoNocturno)
       }
     }
 
     const valores = {
       horasExtraDiurnas: totalHorasExtraDiurnas * salarioHora * 1.25,
       horasExtraNocturnas: totalHorasExtraNocturnas * salarioHora * 1.75,
-      otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 2.0,
+      otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 1.25,
       recargoNocturno: totalRecargoNocturno * salarioHora * 0.35,
       recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
-    console.log(valores.recargoNocturno)
 
     const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
     const costoTotal = Object.values(valores).reduce((sum, val) => sum + val, 0) * 1.3855;
