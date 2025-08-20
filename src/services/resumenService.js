@@ -220,7 +220,7 @@ function calcularResumenEmpleados(empleados, turnos) {
       recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
 
-    const totalPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
+    const netoAPagar = Object.values(valores).reduce((sum, val) => sum + val, 0) * 0.92;
     const costoTotal = Object.values(valores).reduce((sum, val) => sum + val, 0) * 1.3855;
 
     const horasExtraTotales = totalHorasExtraDiurnas + totalHorasExtraNocturnas;
@@ -248,7 +248,7 @@ function calcularResumenEmpleados(empleados, turnos) {
       valores: Object.fromEntries(
         Object.entries(valores).map(([k, v]) => [k, Math.max(0, Math.round(v))])
       ),
-      totalPagar: Math.round(totalPagar),
+      netoAPagar: Math.round(netoAPagar),
       costoTotal: Math.round(costoTotal),
       totalHoras: totalHoras.toFixed(2),
       horasExtra: horasExtraTotales.toFixed(2),
@@ -260,7 +260,7 @@ function calcularResumenEmpleados(empleados, turnos) {
 
   const totales = resumenEmpleados.reduce((acc, emp) => {
     acc.totalHoras += parseFloat(emp.horas.totalHoras);
-    acc.totalNomina += parseFloat(emp.totalPagar);
+    acc.totalNomina += parseFloat(emp.netoAPagar);
     acc.totalExtras += parseFloat(emp.horasExtra);
     acc.totalTurnos += emp.cantidadTurnos;
     acc.totalFestivas = (acc.totalFestivas || 0) + parseFloat(emp.horas.horasFestivas || 0);
