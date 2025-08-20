@@ -215,7 +215,7 @@ function calcularResumenEmpleados(empleados, turnos) {
     const valores = {
       horasExtraDiurnas: totalHorasExtraDiurnas * salarioHora * 1.25,
       horasExtraNocturnas: totalHorasExtraNocturnas * salarioHora * 1.75,
-      otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 1.25,
+      // otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 1.25,
       recargoNocturno: totalRecargoNocturno * salarioHora * 0.35,
       recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
@@ -240,7 +240,7 @@ function calcularResumenEmpleados(empleados, turnos) {
         horasExtraTotales: horasExtraTotales.toFixed(2),
         horasExtraDiurnas: totalHorasExtraDiurnas.toFixed(2),
         horasExtraNocturnas: totalHorasExtraNocturnas.toFixed(2),
-        otrasHorasExtras: totalOtrasHorasExtras.toFixed(2),
+        // otrasHorasExtras: totalOtrasHorasExtras.toFixed(2),
         recargoNocturno: totalRecargoNocturno.toFixed(2),
         horasFestivas: horasFestivas.toFixed(2),
         totalHoras: totalHoras.toFixed(2)
@@ -252,7 +252,7 @@ function calcularResumenEmpleados(empleados, turnos) {
       costoTotal: Math.round(costoTotal),
       totalHoras: totalHoras.toFixed(2),
       horasExtra: horasExtraTotales.toFixed(2),
-      pagoExtra: Math.round(valores.horasExtraDiurnas + valores.horasExtraNocturnas + valores.otrasHorasExtras),
+      pagoExtra: Math.round(valores.horasExtraDiurnas + valores.horasExtraNocturnas),
       pagoFestivo: Math.round(valores.recargoFestivo),
       cantidadTurnos: detalleTurnos.length
     };
