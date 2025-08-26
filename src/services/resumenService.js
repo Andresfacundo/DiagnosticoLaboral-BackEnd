@@ -6,9 +6,12 @@ const HORAS_MENSUALES_ESTANDAR = 220;
 const HORA_NOCTURNA_INICIO = 21;
 const HORA_NOCTURNA_FIN = 6;
 const HORAS_SEMANALES_MAXIMAS = 44;
+const HORAS_DIARIAS_LIMITE_POCOS_TURNOS = 9;
 const RECARGO_FESTIVO = 0.80;
 const MAX_HORAS_DIARIAS = 11;
 const MAX_HORAS_EXTRA_SEMANA = 12;
+const MAX_HORAS_SEMANA_TOTAL = 56;
+const MAX_HORAS_EXTRA_DIARIAS = 2;
 
 function esFestivo(fecha) {
   return colombianHolidays.isHoliday(fecha);
@@ -18,19 +21,16 @@ function calcularHorasNocturnas(horaInicio, horaFin, minutosDescanso = 0, inicio
   let inicio = horaInicio * 60;
   let fin = horaFin * 60;
   if (fin <= inicio) fin += 24 * 60;
-  
+
   let nocturnas = 0, diurnas = 0;
-  
-  // Si no se especifica cuándo inicia el descanso, se asume al final del turno
+
   let inicioDescansoMinutos = inicioDescanso ? inicioDescanso * 60 : (fin - minutosDescanso);
   let finDescansoMinutos = inicioDescansoMinutos + minutosDescanso;
 
   for (let minuto = inicio; minuto < fin; minuto++) {
-  
     if (minuto >= inicioDescansoMinutos && minuto < finDescansoMinutos) {
       continue;
     }
-    
     const horaReal = (minuto / 60) % 24;
     if (horaReal >= HORA_NOCTURNA_INICIO || horaReal < HORA_NOCTURNA_FIN) {
       nocturnas++;
@@ -61,18 +61,16 @@ function calcularHorasExtrasDesdeMinuto(horaInicio, horaFin, minutosDescanso, mi
     return { extrasNocturnas: 0, extrasDiurnas: 0 };
   }
 
-  // Si no se especifica cuándo inicia el descanso, se asume al final del turno
   let inicioDescansoMinutos = inicioDescanso ? inicioDescanso * 60 : (fin - minutosDescanso);
   let finDescansoMinutos = inicioDescansoMinutos + minutosDescanso;
 
   let extrasNocturnas = 0, extrasDiurnas = 0;
   let minutosContados = 0;
 
-  for (let minuto = inicio; minuto < fin; minuto++) {    
+  for (let minuto = inicio; minuto < fin; minuto++) {
     if (minuto >= inicioDescansoMinutos && minuto < finDescansoMinutos) {
       continue;
     }
-
 
     if (minutosContados >= minutosHastaExtra) {
       const horaReal = (minuto / 60) % 24;
@@ -137,7 +135,7 @@ function calcularResumenEmpleados(empleados, turnos) {
           const horaInicio = hiH + hiM / 60;
           const horaFin = hfH + hfM / 60;
           const minutosDescanso = Number(turno.minutosDescanso) || 0;
-          
+
           let inicioDescanso = null;
           if (turno.inicioDescanso) {
             const [hdH, hdM] = turno.inicioDescanso.split(":").map(Number);
@@ -151,11 +149,76 @@ function calcularResumenEmpleados(empleados, turnos) {
             throw new Error(`El turno del empleado ${empleado.nombre} el día ${turno.diaInicio} excede las 11 horas permitidas.`);
           }
 
-          totalHoras += tiempoTrabajado;
 
+          totalHoras += tiempoTrabajado;
+          
           const fechaInicio = new Date(`${turno.diaInicio}T00:00:00`);
           const esDiaFestivo = esFestivo(fechaInicio);
           if (esDiaFestivo) horasFestivas += tiempoTrabajado;
+
+          let horasExtraDiariasDelTurno = 0;
+          let horasExtraDiurnasDia = 0;
+          let horasExtraNocturnasDia = 0;
+
+          // Calcular extras DIARIAS (máximo 2 por día)
+          if (tiempoTrabajado > HORAS_DIARIAS_LIMITE_POCOS_TURNOS) {
+            const horasExcedentesDia = Math.min(
+              tiempoTrabajado - HORAS_DIARIAS_LIMITE_POCOS_TURNOS,
+              MAX_HORAS_EXTRA_DIARIAS
+            );
+
+            const minutosHastaExtraDia = HORAS_DIARIAS_LIMITE_POCOS_TURNOS * 60;
+            const { extrasNocturnas, extrasDiurnas } = calcularHorasExtrasDesdeMinuto(
+              horaInicio, horaFin, minutosDescanso, minutosHastaExtraDia, inicioDescanso
+            );
+
+            const totalExtrasDia = extrasNocturnas + extrasDiurnas;
+            if (totalExtrasDia > MAX_HORAS_EXTRA_DIARIAS) {
+              const factor = MAX_HORAS_EXTRA_DIARIAS / totalExtrasDia;
+              horasExtraNocturnasDia = extrasNocturnas * factor;
+              horasExtraDiurnasDia = extrasDiurnas * factor;
+            } else {
+              horasExtraNocturnasDia = extrasNocturnas;
+              horasExtraDiurnasDia = extrasDiurnas;
+            }
+
+            horasExtraDiariasDelTurno = horasExtraNocturnasDia + horasExtraDiurnasDia;
+          }
+
+          const horasOrdinariasDelTurno = tiempoTrabajado - horasExtraDiariasDelTurno;
+
+          const espacioDisponibleSemanal = Math.max(0, HORAS_SEMANALES_MAXIMAS - horasAcumuladas);
+          const horasOrdinariasSemana = Math.min(horasOrdinariasDelTurno, espacioDisponibleSemanal);
+          const horasExtrasSemanalesDelTurno = Math.max(0, horasOrdinariasDelTurno - espacioDisponibleSemanal);
+
+          horasAcumuladas += horasOrdinariasSemana;
+
+          let horasExtraSemanalesDiurnas = 0;
+          let horasExtraSemanalesNocturnas = 0;
+
+          if (horasExtrasSemanalesDelTurno > 0) {
+            const minutosOrdinarios = horasOrdinariasSemana * 60;
+            const minutosExtrasYaContadas = horasExtraDiariasDelTurno * 60;
+            const minutosHastaExtraSemanal = minutosOrdinarios + minutosExtrasYaContadas;
+
+            const { extrasNocturnas, extrasDiurnas } = calcularHorasExtrasDesdeMinuto(
+              horaInicio, horaFin, minutosDescanso, minutosHastaExtraSemanal, inicioDescanso
+            );
+
+            horasExtraSemanalesNocturnas = extrasNocturnas;
+            horasExtraSemanalesDiurnas = extrasDiurnas;
+          }
+
+          horasExtraDiurnasSemana += horasExtraDiurnasDia + horasExtraSemanalesDiurnas;
+          horasExtraNocturnasSemana += horasExtraNocturnasDia + horasExtraSemanalesNocturnas;
+
+          // el recargo se calcula solo en las horas ordinarias que son nocturnas
+          const horasNocturnasOrdinarias = Math.max(0, horasNocturnas - (horasExtraNocturnasDia + horasExtraSemanalesNocturnas));
+
+          recargoNocturnoSemana += horasNocturnasOrdinarias;
+
+
+          const horasExtraTotalTurno = horasExtraDiariasDelTurno + horasExtrasSemanalesDelTurno;
 
           detalleTurnos.push({
             empleado: `${empleado.nombre} ${empleado.apellido}`,
@@ -170,31 +233,16 @@ function calcularResumenEmpleados(empleados, turnos) {
             tiempoTrabajado: tiempoTrabajado.toFixed(2),
             horasNocturnas: horasNocturnas.toFixed(2),
             horasDiurnas: horasDiurnas.toFixed(2),
-            horasExtra: "0.00",
+            horasOrdinarias: horasOrdinariasSemana.toFixed(2),
+            horasExtraDiarias: horasExtraDiariasDelTurno.toFixed(2),
+            horasExtraSemanales: horasExtrasSemanalesDelTurno.toFixed(2),
+            horasExtra: horasExtraTotalTurno.toFixed(2),
             esTrabajadorDireccion,
-            esFestivo: esDiaFestivo
+            esFestivo: esDiaFestivo,
+            cantidadTurnosSemana: turnosSemana.length
           });
-
-          const espacioDisponible = Math.max(0, HORAS_SEMANALES_MAXIMAS - horasAcumuladas);
-          const horasAsignadas = Math.min(tiempoTrabajado, espacioDisponible);
-          const horasExcedentes = Math.max(0, tiempoTrabajado - espacioDisponible);
-
-          horasAcumuladas += horasAsignadas;
-          if (horasAsignadas > 0) {
-            recargoNocturnoSemana += horasNocturnas;
-          }
-
-          if (horasExcedentes > 0) {
-            const minutosHastaExtra = espacioDisponible * 60;
-            const { extrasNocturnas, extrasDiurnas } =
-              calcularHorasExtrasDesdeMinuto(horaInicio, horaFin, minutosDescanso, minutosHastaExtra, inicioDescanso);
-
-            horasExtraNocturnasSemana += extrasNocturnas;
-            horasExtraDiurnasSemana += extrasDiurnas;
-          }
         }
 
-        // Limitar horas extra
         const horasExtraTotalesSemana = horasExtraDiurnasSemana + horasExtraNocturnasSemana;
         let otrasHorasExtrasSemana = 0;
         let horasExtraDiurnasPermitidasSemana = horasExtraDiurnasSemana;
@@ -215,7 +263,6 @@ function calcularResumenEmpleados(empleados, turnos) {
     const valores = {
       horasExtraDiurnas: totalHorasExtraDiurnas * salarioHora * 1.25,
       horasExtraNocturnas: totalHorasExtraNocturnas * salarioHora * 1.75,
-      // otrasHorasExtras: totalOtrasHorasExtras * salarioHora * 1.25,
       recargoNocturno: totalRecargoNocturno * salarioHora * 0.35,
       recargoFestivo: horasFestivas * salarioHora * RECARGO_FESTIVO
     };
@@ -240,7 +287,6 @@ function calcularResumenEmpleados(empleados, turnos) {
         horasExtraTotales: horasExtraTotales.toFixed(2),
         horasExtraDiurnas: totalHorasExtraDiurnas.toFixed(2),
         horasExtraNocturnas: totalHorasExtraNocturnas.toFixed(2),
-        // otrasHorasExtras: totalOtrasHorasExtras.toFixed(2),
         recargoNocturno: totalRecargoNocturno.toFixed(2),
         horasFestivas: horasFestivas.toFixed(2),
         totalHoras: totalHoras.toFixed(2)
