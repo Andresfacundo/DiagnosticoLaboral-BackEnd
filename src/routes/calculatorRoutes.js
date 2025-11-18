@@ -3,7 +3,7 @@ const router = express.Router();
 const calculatorController = require('../controllers/calculatorController.js');
 const { verificarAuth, permitirRoles, esAdmin } = require('../middlewares/authMiddleware.js');
 
-router.post('/calcular', verificarAuth, permitirRoles('admin','asociado'), calculatorController.calculateSalary);
+router.post('/calcular', calculatorController.calculateSalary);
 
 router.get('/constants', verificarAuth, permitirRoles('admin','asociado'),calculatorController.getConstants);
 
