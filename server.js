@@ -21,6 +21,7 @@ const corsOptions = {
     origin:[
       `${process.env.URL}`,
       `${process.env.URL_TWO}`,
+      `${process.env.URL_THREE}`,
     ], 
     methods: "GET, POST, PUT, DELETE,PATCH",
     allowedHeaders: "Content-Type, Authorization, x-token"
