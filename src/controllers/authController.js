@@ -4,79 +4,84 @@ const tokenBlackList = require('../models/TokenBlackList');
 const jwt = require('jsonwebtoken');
 
 
+// Registro con estado inactivo por defecto
 const crearUsuario = async (req, res) => {
     try {
         const { email, password, nombre, rol } = req.body;
 
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                msg: 'El email no es válido'
-            });
+            return res.status(400).json({ msg: 'El email no es válido' });
         }
 
-        // Verificar si ya existe el email
+        // Verificar si ya existe
         const usuarioExistente = await Usuario.findOne({ where: { email } });
         if (usuarioExistente) {
-            return res.status(400).json({
-                msg: 'El email ya está registrado'
-            });
+            return res.status(400).json({ msg: 'El email ya está registrado' });
         }
 
-        // Crear usuario (ahora solo accesible por admin)
+        // Crear usuario inactivo
         const usuario = await Usuario.create({
             email,
             password,
             nombre,
-            rol: rol || 'asociado' // El admin puede especificar cualquier rol
+            rol: rol || 'asociado',
+            activo: false
         });
+        const emitirNotificacion = req.app.get("emitirNotificacion");
+        emitirNotificacion("nuevo-usuario-pendiente", {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            rol: usuario.rol,
+            mensaje: "Nuevo usuario pendiente de aprobación.",
+        });
+
         res.status(201).json({
-            msg: 'Usuario creado correctamente',
+            msg: 'Usuario registrado correctamente. Pendiente de aprobación por un administrador.',
             usuario: {
                 id: usuario.id,
                 email: usuario.email,
                 nombre: usuario.nombre,
-                rol: usuario.rol
+                rol: usuario.rol,
+                activo: usuario.activo
             }
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            msg: 'Error al crear usuario'
-        });
+        console.error(error);
+        res.status(500).json({ msg: 'Error al registrar usuario' });
     }
 };
 
+// Login: Solo si está activo
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Verificar si existe el usuario
         const usuario = await Usuario.findOne({ where: { email } });
         if (!usuario) {
-            return res.status(400).json({
-                msg: 'Usuario no registrado'
-            });
+            return res.status(400).json({ msg: 'Usuario no registrado' });
         }
 
-        // Verificar si la contraseña es correcta
         const passwordValido = await usuario.compararPassword(password);
         if (!passwordValido) {
-            return res.status(400).json({
-                msg: 'Usuario o contraseña incorrectos'
-            });
+            return res.status(400).json({ msg: 'Usuario o contraseña incorrectos' });
         }
 
-        // Verificar si el usuario está activo
         if (!usuario.activo) {
-            return res.status(401).json({
-                msg: 'La cuenta está desactivada'
-            });
+            return res.status(401).json({ msg: 'Tu cuenta aún no ha sido aprobada por un administrador' });
         }
 
-        // Generar JWT
         const token = generarJWT(usuario);
+        // Emitir evento de inicio de sesión exitoso
+        const emitirNotificacion = req.app.get("emitirNotificacion");
+        emitirNotificacion("usuario-login", {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            rol: usuario.rol,
+            mensaje: "Usuario ha iniciado sesión correctamente.",
+        });
 
         res.json({
             msg: 'Login exitoso',
@@ -89,10 +94,8 @@ const login = async (req, res) => {
             token
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            msg: 'Error en el servidor'
-        });
+        console.error(error);
+        res.status(500).json({ msg: 'Error en el servidor' });
     }
 };
 
@@ -105,15 +108,13 @@ const logout = async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-
-        // Decodificar el token para obtener fecha de expiración
         const decoded = jwt.decode(token);
 
         if (!decoded || !decoded.exp) {
             return res.status(400).json({ msg: 'Token inválido' });
         }
 
-        const expiresAt = new Date(decoded.exp * 1000); // Convertir de segundos a ms
+        const expiresAt = new Date(decoded.exp * 1000);
 
         // Guardar token en la blacklist
         await tokenBlackList.create({ token, expiresAt });
@@ -125,9 +126,95 @@ const logout = async (req, res) => {
         res.status(500).json({ msg: 'Error en el servidor durante el cierre de sesión' });
     }
 };
+const perfil = async (req, res) => {
+    try {
+        const usuario = req.usuario;
+        res.json({
+            msg: 'Perfil obtenido correctamente',
+            usuario: {
+                id: usuario.id,
+                email: usuario.email,
+                nombre: usuario.nombre,
+                rol: usuario.rol
+            }
+        });
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: 'Error al obtener el perfil' });
+    }
+
+};
+
+const listarPendientes = async (req, res) => {
+    try {
+        const pendientes = await Usuario.findAll({ where: { activo: false } });
+        res.json(pendientes);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Error al listar usuarios pendientes' });
+    }
+};
+
+const aprobarUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const usuario = await Usuario.findByPk(id);
+
+        if (!usuario) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        usuario.activo = true;
+        await usuario.save();
+
+        const emitirNotificacion = req.app.get("emitirNotificacion");
+        emitirNotificacion("usuario-aprobado", {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            mensaje: "Tu cuenta ha sido aprobada por un administrador.",
+        });
+
+        res.json({ msg: 'Usuario aprobado correctamente', usuario });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Error al aprobar usuario' });
+    }
+};
+
+const rechazarUsuario = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+        const usuario = await Usuario.findByPk(id);
+
+        if (!usuario) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+ 
+        await usuario.destroy();
+
+        const emitirNotificacion = req.app.get("emitirNotificacion");
+        emitirNotificacion("usuario-rechazado", {
+            id,
+            mensaje: "Un usuario ha sido rechazado y eliminado del sistema.",
+        });
+
+        res.json({ msg: 'Usuario rechazado y eliminado' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Error al rechazar usuario' });
+    }
+};
 
 module.exports = {
     crearUsuario,
     login,
-    logout
+    logout,
+    perfil,
+    listarPendientes,
+    aprobarUsuario,
+    rechazarUsuario
+
 };

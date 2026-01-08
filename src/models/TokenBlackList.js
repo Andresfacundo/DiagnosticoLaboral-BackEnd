@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../../db');
 
 const tokenBlackList = sequelize.define('TokenBlackList', {
@@ -16,18 +16,18 @@ const tokenBlackList = sequelize.define('TokenBlackList', {
     timestamps: true
 });
 
-tokenBlackList.cleanExpired = async () =>{
+tokenBlackList.cleanExpired = async () => {
     try {
         await tokenBlackList.destroy({
             where: {
-                expiresAt:{
-                    [sequelize.Sequelize.prototype.lt]: new Date()
+                expiresAt: {
+                    [Op.lt]: new Date()
                 }
             }
         });
         console.log('Expired tokens removed successfully');
-    }catch (error) {
+    } catch (error) {
         console.error('Error removing expired tokens:', error);
     }
-}
+};
 module.exports = tokenBlackList;

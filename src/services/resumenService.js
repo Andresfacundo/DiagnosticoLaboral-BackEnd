@@ -1,4 +1,4 @@
-const empleadosService = require("./empleadosService");
+const empleadosService = require("./trabajadorService");
 const turnosService = require("./turnosService");
 const colombianHolidays = require('colombian-holidays');
 

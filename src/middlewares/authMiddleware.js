@@ -91,9 +91,6 @@ const permitirRoles = (...rolesPermitidos) => {
   };
 };
 
-
-
-
 module.exports = {
   verificarAuth,
   asociado,

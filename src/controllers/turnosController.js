@@ -1,30 +1,72 @@
-const turnosService = require('../services/turnosService.js');
+const Turno = require("../models/Turnos");
+const TurnoService = require('../services/turnosService');
 
-const obtenerTurnos = (req, res) => {
-  res.json(turnosService.getTurnos());
-};
-
-const agregarTurno = (req, res) => {
-  const nuevoTurno = turnosService.addTurno(req.body);
-  res.status(201).json(nuevoTurno);
-};
-
-const actualizarTurno = (req, res) => {
-  const { id } = req.params;
-  const turnoActualizado = turnosService.updateTurno(id, req.body);
-  if (!turnoActualizado) {
-    return res.status(404).json({ error: 'Turno no encontrado' });
+class TurnoController {
+  async crear(req, res) {
+    try {
+      const service = new TurnoService();
+      const turno = await service.add(req.params.trabajadorId, req.body, req.usuario.id);
+      res.json({
+        message: "Turno creado correctamente",
+        data: turno
+      });
+    } catch (err) {
+      res.status(400).json({
+        error: err.message || "Error al crear el turno"
+      });
+    }
   }
-  res.json(turnoActualizado);
-};
-const eliminarTurno = (req, res) => {
-  const { id } = req.params;
-  const eliminado = turnosService.deleteTurno(id);
-  if (!eliminado) {
-    return res.status(404).json({ error: 'Turno no encontrado' });
+
+  async listar(req, res) {
+    try {
+      const usuarioId = req.usuario.id;
+      const { nombre, apellido, area, cc, diaInicio, diaFin } = req.query;
+      const service = new TurnoService();
+      const all = await service.getAll(usuarioId, { nombre, apellido, area, cc, diaInicio, diaFin });
+      res.json(all);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
   }
-  res.status(204).send();
-};
+  async listarById(req, res) {
+    try {
+      const { id } = req.params
+      const usuarioId = req.usuario.id;
+      const service = new TurnoService();
+      const all = await service.getById(id, usuarioId);
+      res.json(all);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
 
+  async actualizar(req, res) {
+    try {
+      const { id } = req.params;
+      const usuarioId = req.usuario.id;
+      const service = new TurnoService();
+      const update = await service.update(id, req.body, usuarioId);
+      res.json({
+        message: "Turno actualizado correctamente",
+        data: update
+      });
 
-module.exports = { obtenerTurnos, agregarTurno , actualizarTurno, eliminarTurno };
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+      const usuarioId = req.usuario.id;
+      const service = new TurnoService();
+      await service.delete(id, usuarioId);
+      res.json({ message: "Turno eliminado" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+}
+
+module.exports = new TurnoController();
