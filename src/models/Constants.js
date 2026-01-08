@@ -5,17 +5,17 @@ const Constants = sequelize.define('Constants', {
   salarioMinimo: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1423500
+    defaultValue: 1750905
   },
   auxilioDeTransporte: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 200000
+    defaultValue: 249095
   },
   UVT: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 49799
+    defaultValue: 52374
   }
 }, {
   timestamps: false
