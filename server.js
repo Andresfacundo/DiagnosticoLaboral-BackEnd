@@ -30,6 +30,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  next();
+});
 app.use(express.json());
 
 app.use('/api/contacto', contactoRoutes);
